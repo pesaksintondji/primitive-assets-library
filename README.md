@@ -26,15 +26,15 @@ in its catalog so it shows up correctly in the Asset Browser's catalog tree.
 1. Get the repo onto your disk — either clone it:
 
    ```bash
-   git clone https://github.com/<your-user>/primitive-assets-library.git
+   git clone https://github.com/pesaksintondji/primitive-assets-library.git
    ```
 
    or, if you just want the single `.blend` file, download it directly from its raw
-   GitHub URL once the repo is public:
+   GitHub URL:
 
    ```bash
    curl -L -o primitives.blend \
-     https://raw.githubusercontent.com/<your-user>/primitive-assets-library/main/assets/primitives.blend
+     https://raw.githubusercontent.com/pesaksintondji/primitive-assets-library/master/assets/primitives.blend
    ```
 
    (Grab `blender_assets.cats.txt` from the same `assets/` folder too if you want the
