@@ -1,0 +1,12 @@
+# Blender
+*.blend1
+*.blend2
+*.blend@
+*.blend~
+
+# Scratch thumbnails baked into the .blend's custom previews, not shipped
+assets/.thumbs/
+
+# OS junk
+.DS_Store
+Thumbs.db

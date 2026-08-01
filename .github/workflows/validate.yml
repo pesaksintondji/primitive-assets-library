@@ -1,0 +1,19 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check build script compiles
+        run: python3 -m py_compile scripts/build_library.py
+
+      - name: Check shipped files are present
+        run: |
+          test -f assets/primitives.blend
+          test -f assets/blender_assets.cats.txt
