@@ -1,0 +1,509 @@
+{
+  "asset_count": 14,
+  "file_count": 1,
+  "assets": [
+    {
+      "name": "Cone",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/cone.webp",
+        "hash": "SHA256:77d9a454812a4d381a5e1a938572989b3c4848806c2b4fe17c42271c6a581435"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "cone",
+          "primitive"
+        ],
+        "description": "Cone, base radius 1m, height 2m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cube",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/cube.webp",
+        "hash": "SHA256:53616223aa991e10584b6cfcdeb3fc647e7223e6f85d8915a1e0de5d15965bad"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "cube",
+          "box",
+          "primitive"
+        ],
+        "description": "Standard 2m cube.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cylinder",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/cylinder.webp",
+        "hash": "SHA256:b4e2e42f8f837bfc830fa715f6396b0f7ba3ebda60b4f7f09eb3926f5bcaa140"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "cylinder",
+          "primitive"
+        ],
+        "description": "Cylinder, radius 1m, height 2m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Dome",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/dome.webp",
+        "hash": "SHA256:e4171e5677417aee04b67be849117430d5b6382de626ae98a614e28a7ca34557"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "dome",
+          "half-sphere",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "Half-sphere dome, radius 1m, flat base.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              1.9999988079071045,
+              1.9999992847442627,
+              1.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Hex Prism",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/hex-prism.webp",
+        "hash": "SHA256:6b50af5e137effd793a29594d25d61854fd8774f286b18fbda8f2410c9fa8ccf"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "hexagon",
+          "prism",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "Hexagonal prism, radius 1m, height 2m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              1.7320507764816284,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ico Sphere",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/ico-sphere.webp",
+        "hash": "SHA256:2cbc789629c72119890e4f28f71ef008225a1599b1eedcae1357ac2956fc5de4"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "sphere",
+          "ico",
+          "primitive"
+        ],
+        "description": "Icosphere, radius 1m, 3 subdivisions.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              1.9999998807907104,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Plane",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/plane.webp",
+        "hash": "SHA256:eb530f3682b371821a39cc8b703ed45888e7a7d41c14b91da5e9dd9217830f64"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "plane",
+          "grid",
+          "primitive"
+        ],
+        "description": "Flat 2m plane.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              0.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pyramid",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/pyramid.webp",
+        "hash": "SHA256:3599e734bb839191702128244a15e6c64c300226bd1d5cb24910afd469419e2c"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "pyramid",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "Square-base pyramid, 2x2m base, 2m tall.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              1.9999998807907104,
+              1.9999998807907104,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rounded Cube",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/rounded-cube.webp",
+        "hash": "SHA256:fb8c4cfff1079f500a1ad50a60bdacfeeeb542dcde7ae11d71dc8390c893b658"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "cube",
+          "rounded",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "2m cube with a soft rounded bevel, kitbash-ready.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sphere",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/sphere.webp",
+        "hash": "SHA256:38a90d228ea2ce53ac3490dc7adf39ae338edbfc435f9153c5b99424f243ff05"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "sphere",
+          "ball",
+          "primitive"
+        ],
+        "description": "UV sphere, radius 1m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              1.9999988079071045,
+              1.9999992847442627,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Stairs",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/stairs.webp",
+        "hash": "SHA256:4f315a83d34a96122c73378f0bc40e5c5f79f4ca15636facd9c29ddf187fe9e5"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "stairs",
+          "steps",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "5-step staircase block, 2m wide, 2m tall, 2m deep.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Torus",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/torus.webp",
+        "hash": "SHA256:2768380dd1e506d7f3a6fc173ed46dda6b42f59c0e5a35c9b579965d0c69cc4f"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "torus",
+          "donut",
+          "primitive"
+        ],
+        "description": "Torus, major radius 1m, minor radius 0.35m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.700000047683716,
+              2.700000047683716,
+              0.699999988079071
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tube",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/tube.webp",
+        "hash": "SHA256:59a0cbe08d0733b5f6231b1bcd8f793f8903e9cbd68f1256d2483fb36c00c586"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "tube",
+          "pipe",
+          "hollow",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "Hollow cylindrical tube, outer radius 1m, wall thickness 0.35m.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Wedge",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/wedge.webp",
+        "hash": "SHA256:5876b6e277af26716cc280c1da29c14680c02abc7077e8595d8690bfef476817"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "wedge",
+          "ramp",
+          "kit",
+          "hard-surface"
+        ],
+        "description": "Ramp / wedge block, 2x2x2m footprint.",
+        "properties": [
+          {
+            "name": "dimensions",
+            "type": "IDP_ARRAY",
+            "value": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "itemtype": "IDP_FLOAT"
+          }
+        ]
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "primitives.blend",
+      "size_in_bytes": 572196,
+      "hash": "SHA256:35f0bef713aa28ded7a4e8ce09359e2cd1b1a912df21b94376beeaf713ddf21e",
+      "blender_version": "5.2.44"
+    }
+  ]
+}

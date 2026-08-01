@@ -7,6 +7,9 @@
 # Scratch thumbnails baked into the .blend's custom previews, not shipped
 assets/.thumbs/
 
+# Local build-cache marker from the remote listing generator (not needed for hosting)
+assets/primitives_thumbnails/.last_modified
+
 # OS junk
 .DS_Store
 Thumbs.db

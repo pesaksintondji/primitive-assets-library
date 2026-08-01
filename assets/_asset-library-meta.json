@@ -1,0 +1,13 @@
+{
+  "api_versions": {
+    "v1": {
+      "url": "_v1/asset-index.json",
+      "hash": "SHA256:f6adf1bc4e7facef067751515e98089d628ce5812ab3049f480889a7e0673558"
+    }
+  },
+  "name": "Primitive Assets Library",
+  "contact": {
+    "name": "pesaksintondji",
+    "url": "https://github.com/pesaksintondji/primitive-assets-library"
+  }
+}

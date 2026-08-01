@@ -23,6 +23,35 @@ in its catalog so it shows up correctly in the Asset Browser's catalog tree.
 
 ## Installing it as an Asset Library
 
+There are two ways to hook this up in Blender, depending on your version.
+
+### Option A — Remote Asset Library (Blender 5.2+, no download step)
+
+Blender 5.2 added genuine remote asset libraries: point it at a URL and it fetches
+the catalog listing, thumbnails and `.blend` data on demand, no `git clone` required.
+This repo ships the `_asset-library-meta.json` / `_v1/` index that format needs,
+generated straight from `primitives.blend` (see below), so you can add it as:
+
+```python
+import bpy
+bpy.ops.preferences.asset_library_add(
+    remote_url="https://raw.githubusercontent.com/pesaksintondji/primitive-assets-library/master/assets/",
+    type='REMOTE',
+)
+```
+
+Run that once in Blender's Python console (or `Scripting` tab), then check
+**Edit ▸ Preferences ▸ File Paths ▸ Asset Libraries** — a *Primitive Assets Library*
+entry should appear, marked as a remote (globe icon) library.
+
+> The URL has to point at the folder that directly contains
+> `_asset-library-meta.json` — that's `.../primitive-assets-library/master/assets/`,
+> not the repo root, and not the `github.com` page (which serves HTML, not raw
+> files — that's the mistake that produces a "file does not exist ... meta.json"
+> error).
+
+### Option B — Local folder library (any Blender version with Asset Browser)
+
 1. Get the repo onto your disk — either clone it:
 
    ```bash
@@ -67,6 +96,18 @@ dimension.
 To add a new asset: append a `dict(...)` entry to the `ASSETS` list in
 `scripts/build_library.py` (mesh builder callable, category, shading mode, optional
 bevel, description, tags) and re-run the script.
+
+After that, regenerate the remote index (Option A above reads this, not the raw
+`.blend`) so it picks up the new/changed assets and thumbnails:
+
+```bash
+./scripts/generate_remote_index.sh
+```
+
+It shells out to `blender -c asset_listing generate assets`, which re-scans
+`primitives.blend` and rewrites `_asset-library-meta.json`, `_v1/*.json` and the
+per-asset `.webp` thumbnails in `assets/primitives_thumbnails/`. It preserves the
+library `name`/`contact` you've set in `_asset-library-meta.json` across re-runs.
 
 ## License
 
