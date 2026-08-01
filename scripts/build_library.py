@@ -305,9 +305,15 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
     ng.links.new(transform_node.outputs["Geometry"], switch_node.inputs[False])
     ng.links.new(sba_node.outputs[0], switch_node.inputs[True])
 
+    # Direction-arrow indicators (built further below, per Division axis) join
+    # in here before the material is applied.
+    arrow_join = ng.nodes.new("GeometryNodeJoinGeometry")
+    arrow_join.location = (450, 200)
+    ng.links.new(switch_node.outputs[0], arrow_join.inputs["Geometry"])
+
     set_mat_node = ng.nodes.new("GeometryNodeSetMaterial")
     set_mat_node.location = (600, 200)
-    ng.links.new(switch_node.outputs[0], set_mat_node.inputs["Geometry"])
+    ng.links.new(arrow_join.outputs["Geometry"], set_mat_node.inputs["Geometry"])
     ng.links.new(group_in.outputs["Material"], set_mat_node.inputs["Material"])
     ng.links.new(set_mat_node.outputs["Geometry"], group_out.inputs["Geometry"])
 
@@ -368,6 +374,66 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
         ng.links.new(group_in.outputs[f"Division {axis}"], dial.inputs["Value"])
         ng.links.new(pos_add.outputs["Vector"], dial.inputs["Position"])
         ng.links.new(up.outputs["Vector"], dial.inputs["Up"])
+
+        # Visible "which way increases the value" hint: a small cone sitting
+        # on the ring, pointing along the ring's increasing-angle tangent
+        # (right-hand rule around the Up/axis vector — same convention as the
+        # dial itself). Native GizmoDial has no built-in arrow marker, so
+        # this is baked into the actual mesh instead.
+        ref_axis = ("X", "Y", "Z")[(i + 1) % 3]
+        tangent_axis = ("X", "Y", "Z")[(i + 2) % 3]
+
+        ref_offset = ng.nodes.new("FunctionNodeInputVector")
+        ref_offset.location = (400, -2900 - 150 * i)
+        rv = [0.0, 0.0, 0.0]
+        rv[(i + 1) % 3] = 0.4
+        ref_offset.vector = rv
+
+        # Nudge outward along the face normal so the arrow reads as a
+        # protruding stud rather than sinking flush into the surface.
+        outward = ng.nodes.new("FunctionNodeInputVector")
+        outward.location = (400, -2650 - 150 * i)
+        ov = [0.0, 0.0, 0.0]
+        ov[i] = 0.18
+        outward.vector = ov
+
+        arrow_base_pos = ng.nodes.new("ShaderNodeVectorMath")
+        arrow_base_pos.operation = "ADD"
+        arrow_base_pos.location = (650, -2650 - 150 * i)
+        ng.links.new(pos_add.outputs["Vector"], arrow_base_pos.inputs[0])
+        ng.links.new(outward.outputs["Vector"], arrow_base_pos.inputs[1])
+
+        arrow_pos = ng.nodes.new("ShaderNodeVectorMath")
+        arrow_pos.operation = "ADD"
+        arrow_pos.location = (900, -2900 - 150 * i)
+        ng.links.new(arrow_base_pos.outputs["Vector"], arrow_pos.inputs[0])
+        ng.links.new(ref_offset.outputs["Vector"], arrow_pos.inputs[1])
+
+        tangent_dir = ng.nodes.new("FunctionNodeInputVector")
+        tangent_dir.location = (400, -3400 - 150 * i)
+        tv = [0.0, 0.0, 0.0]
+        tv[(i + 2) % 3] = 1.0
+        tangent_dir.vector = tv
+
+        align_rot = ng.nodes.new("FunctionNodeAlignEulerToVector")
+        align_rot.axis = "Z"
+        align_rot.location = (650, -3400 - 150 * i)
+        ng.links.new(tangent_dir.outputs["Vector"], align_rot.inputs["Vector"])
+
+        arrow_cone = ng.nodes.new("GeometryNodeMeshCone")
+        arrow_cone.location = (400, -3900 - 150 * i)
+        arrow_cone.inputs["Vertices"].default_value = 8
+        arrow_cone.inputs["Radius Bottom"].default_value = 0.13
+        arrow_cone.inputs["Radius Top"].default_value = 0.0
+        arrow_cone.inputs["Depth"].default_value = 0.3
+
+        arrow_transform = ng.nodes.new("GeometryNodeTransform")
+        arrow_transform.location = (900, -3900 - 150 * i)
+        ng.links.new(arrow_cone.outputs["Mesh"], arrow_transform.inputs["Geometry"])
+        ng.links.new(arrow_pos.outputs["Vector"], arrow_transform.inputs["Translation"])
+        ng.links.new(align_rot.outputs["Rotation"], arrow_transform.inputs["Rotation"])
+
+        ng.links.new(arrow_transform.outputs["Geometry"], arrow_join.inputs["Geometry"])
 
     # --- Pivot move gizmo (3-axis translate arrows), driving Corner Ratio
     # through the same offset math used to place the shape/other gizmos.
@@ -485,6 +551,12 @@ def render_thumbnail(obj, filepath, color):
         if not o.hide_render:
             o.hide_render = True
             hidden.append(o)
+
+    # obj.bound_box is stale (zero-size) until the depsgraph has evaluated the
+    # object at least once — matters for GN-modifier objects (Cube), whose base
+    # mesh has no geometry of its own to fall back on.
+    obj.update_tag(refresh={"DATA"})
+    bpy.context.view_layer.update()
 
     bbox = [obj.matrix_world @ mathutils.Vector(c) for c in obj.bound_box]
     center = sum(bbox, mathutils.Vector((0, 0, 0))) / 8

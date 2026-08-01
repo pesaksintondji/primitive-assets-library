@@ -47,7 +47,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cube.webp",
-        "hash": "SHA256:e175c8a3c4cf2e311b58b8ef1b718182f4db8314a8645c3729b0eb18cba71722"
+        "hash": "SHA256:6239af8e1649bdf0b91a880738dd02827ca2692cc8ad8003c2bf5cb0a64635d3"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -490,8 +490,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 542006,
-      "hash": "SHA256:d115e9c397eab605949e3aaf321349bd11fec3844415af9307bae4d60c6efece",
+      "size_in_bytes": 523518,
+      "hash": "SHA256:fe762c924153d85e0e306a234080b000fad30b64e81c3f35826a99751772a48d",
       "blender_version": "5.2.44"
     }
   ]
