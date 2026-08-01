@@ -13,6 +13,7 @@ catalog assignments in blender_assets.cats.txt keep matching).
 
 import bpy
 import bmesh
+import colorsys
 import math
 import os
 import mathutils
@@ -54,12 +55,28 @@ bsdf = clay.node_tree.nodes["Principled BSDF"]
 bsdf.inputs["Base Color"].default_value = (0.68, 0.68, 0.7, 1.0)
 bsdf.inputs["Roughness"].default_value = 0.45
 
+# Only used to color the thumbnail renders (Blender-Asset-Browser style, one
+# distinct hue per asset) — never shipped as the asset's actual material.
+preview_mat = bpy.data.materials.new("Preview Color")
+preview_mat.use_nodes = True
+preview_bsdf = preview_mat.node_tree.nodes["Principled BSDF"]
+preview_bsdf.inputs["Roughness"].default_value = 0.35
+
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 64
 scene.cycles.use_denoising = True
 scene.render.resolution_x = 256
 scene.render.resolution_y = 256
+scene.render.film_transparent = True
 scene.render.image_settings.file_format = "PNG"
+scene.render.image_settings.color_mode = "RGBA"
+
+
+def preview_color(index, total):
+    """Distinct, repeatable hue per asset (golden-angle spacing)."""
+    hue = (index * 0.6180339887498949 + 0.08) % 1.0
+    r, g, b = colorsys.hsv_to_rgb(hue, 0.62, 0.95)
+    return (r, g, b, 1.0)
 
 cam_data = bpy.data.cameras.new("ThumbCam")
 cam_data.lens = 50
@@ -213,7 +230,7 @@ def make_asset(obj, catalog_uuid, description, tags):
         ad.tags.new(t)
 
 
-def render_thumbnail(obj, filepath):
+def render_thumbnail(obj, filepath, color):
     hidden = []
     for o in scene.collection.all_objects:
         if o is obj or o.type in ("CAMERA", "LIGHT"):
@@ -233,8 +250,19 @@ def render_thumbnail(obj, filepath):
     key.location = cam.location + mathutils.Vector((-1.0, -1.5, 2.0))
     key.rotation_euler = (center - key.location).to_track_quat("-Z", "Y").to_euler()
 
+    # Swap in the random-hue preview material just for this render — the
+    # shipped asset keeps its neutral clay material.
+    shipped_mats = list(obj.data.materials)
+    preview_bsdf.inputs["Base Color"].default_value = color
+    obj.data.materials.clear()
+    obj.data.materials.append(preview_mat)
+
     scene.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
+
+    obj.data.materials.clear()
+    for m in shipped_mats:
+        obj.data.materials.append(m)
 
     for o in hidden:
         o.hide_render = False
@@ -378,7 +406,7 @@ def _make_pyramid():
 catalog_for = {"base": CATALOG_BASE, "kit": CATALOG_KIT}
 collection_for = {"base": base_col, "kit": kit_col}
 
-for spec in ASSETS:
+for i, spec in enumerate(ASSETS):
     obj = spec["make"]()
     obj.name = spec["name"]
     obj.data.name = spec["name"]
@@ -392,10 +420,12 @@ for spec in ASSETS:
     make_asset(obj, catalog_for[spec["category"]], spec["description"], spec["tags"])
 
     thumb_path = os.path.join(THUMB_DIR, f"{spec['name'].replace(' ', '_')}.png")
-    render_thumbnail(obj, thumb_path)
+    render_thumbnail(obj, thumb_path, preview_color(i, len(ASSETS)))
     set_custom_preview(obj, thumb_path)
 
     print(f"Built asset: {spec['name']} ({spec['category']})")
+
+bpy.data.materials.remove(preview_mat)
 
 # ---------------------------------------------------------------------------
 # Catalog definition file (lives next to the .blend, read by the Asset Browser)

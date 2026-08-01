@@ -13,7 +13,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cone.webp",
-        "hash": "SHA256:77d9a454812a4d381a5e1a938572989b3c4848806c2b4fe17c42271c6a581435"
+        "hash": "SHA256:06d134876fa426e16b3a154c4bbf1f8f618b0e97085c1688dae7fae3d96fdf84"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -47,7 +47,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cube.webp",
-        "hash": "SHA256:53616223aa991e10584b6cfcdeb3fc647e7223e6f85d8915a1e0de5d15965bad"
+        "hash": "SHA256:8b3e96ed0230b9168c84ab82ed2f7b717a9e3029dc6f6c21bf54621495df79db"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -82,7 +82,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cylinder.webp",
-        "hash": "SHA256:b4e2e42f8f837bfc830fa715f6396b0f7ba3ebda60b4f7f09eb3926f5bcaa140"
+        "hash": "SHA256:40ba15ce65b24c1e473c6b2afd1f8e9b97d6d0f72af1968360ba7f429d06874e"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -116,7 +116,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/dome.webp",
-        "hash": "SHA256:e4171e5677417aee04b67be849117430d5b6382de626ae98a614e28a7ca34557"
+        "hash": "SHA256:d531eeb490f4f663c0d8a858046e45a6efcb33a037dceffad020fef579e58061"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -152,7 +152,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/hex-prism.webp",
-        "hash": "SHA256:6b50af5e137effd793a29594d25d61854fd8774f286b18fbda8f2410c9fa8ccf"
+        "hash": "SHA256:0ad8eb7cacf148526d8b61c2d2c3421da23b42cdad731fdf63a743297786c535"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -188,7 +188,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/ico-sphere.webp",
-        "hash": "SHA256:2cbc789629c72119890e4f28f71ef008225a1599b1eedcae1357ac2956fc5de4"
+        "hash": "SHA256:81ef0d885220880651859f09ba6d6556c98a5f9f6890e79b878a5f2508a02925"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -223,7 +223,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/plane.webp",
-        "hash": "SHA256:eb530f3682b371821a39cc8b703ed45888e7a7d41c14b91da5e9dd9217830f64"
+        "hash": "SHA256:6a94d34d21597473a2103b8c91b577fc928b632c916ad9e61aa4abce8a42ef91"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -258,7 +258,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/pyramid.webp",
-        "hash": "SHA256:3599e734bb839191702128244a15e6c64c300226bd1d5cb24910afd469419e2c"
+        "hash": "SHA256:06a085c03ee609725ec813725c651659f6d7e240dd999062d31a55a65813f8dd"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -293,7 +293,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/rounded-cube.webp",
-        "hash": "SHA256:fb8c4cfff1079f500a1ad50a60bdacfeeeb542dcde7ae11d71dc8390c893b658"
+        "hash": "SHA256:ef3f567b67c050661f67273526951861e36349708217cdbc0d7072913fdaf045"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -329,7 +329,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/sphere.webp",
-        "hash": "SHA256:38a90d228ea2ce53ac3490dc7adf39ae338edbfc435f9153c5b99424f243ff05"
+        "hash": "SHA256:fc28f12311308cecf3f2af3c226b9ccbf35cab6dc9879c8f21603cd0639fb5cf"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -364,7 +364,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/stairs.webp",
-        "hash": "SHA256:4f315a83d34a96122c73378f0bc40e5c5f79f4ca15636facd9c29ddf187fe9e5"
+        "hash": "SHA256:8f9a07027398d015c01e0e62fc92444231f3da49b10688f5553b8903c5d3eb27"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -400,7 +400,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/torus.webp",
-        "hash": "SHA256:2768380dd1e506d7f3a6fc173ed46dda6b42f59c0e5a35c9b579965d0c69cc4f"
+        "hash": "SHA256:52bc41ed758388969519b950d853ce49c3abb4860f311734fccef12cb055afb6"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -435,7 +435,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/tube.webp",
-        "hash": "SHA256:59a0cbe08d0733b5f6231b1bcd8f793f8903e9cbd68f1256d2483fb36c00c586"
+        "hash": "SHA256:eb86931a5930074054572f731632d18bf242a59ab47c2efa1c816eda936c8adb"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -472,7 +472,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/wedge.webp",
-        "hash": "SHA256:5876b6e277af26716cc280c1da29c14680c02abc7077e8595d8690bfef476817"
+        "hash": "SHA256:1d18ec96ad4a6eb3e783b04a14942bf138202a6a3e0633083f8a477f643be56d"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -501,8 +501,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 572196,
-      "hash": "SHA256:35f0bef713aa28ded7a4e8ce09359e2cd1b1a912df21b94376beeaf713ddf21e",
+      "size_in_bytes": 514495,
+      "hash": "SHA256:38969c77d9f4e8751a79639c9f6ddb10455b86710987dd6206303e4fbd8b3cf3",
       "blender_version": "5.2.44"
     }
   ]
