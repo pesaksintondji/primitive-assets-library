@@ -17,6 +17,7 @@ import colorsys
 import math
 import os
 import mathutils
+import numpy as np
 
 # ---------------------------------------------------------------------------
 # Paths & stable catalog UUIDs (do not change once published — these are what
@@ -61,6 +62,14 @@ preview_mat = bpy.data.materials.new("Preview Color")
 preview_mat.use_nodes = True
 preview_bsdf = preview_mat.node_tree.nodes["Principled BSDF"]
 preview_bsdf.inputs["Roughness"].default_value = 0.35
+
+# Thumbnail-only wireframe overlay material (dark, unlit-ish so edges read
+# clearly against any hue).
+preview_wire_mat = bpy.data.materials.new("Preview Wire")
+preview_wire_mat.use_nodes = True
+preview_wire_bsdf = preview_wire_mat.node_tree.nodes["Principled BSDF"]
+preview_wire_bsdf.inputs["Base Color"].default_value = (0.02, 0.02, 0.02, 1.0)
+preview_wire_bsdf.inputs["Roughness"].default_value = 0.8
 
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 64
@@ -305,15 +314,9 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
     ng.links.new(transform_node.outputs["Geometry"], switch_node.inputs[False])
     ng.links.new(sba_node.outputs[0], switch_node.inputs[True])
 
-    # Direction-arrow indicators (built further below, per Division axis) join
-    # in here before the material is applied.
-    arrow_join = ng.nodes.new("GeometryNodeJoinGeometry")
-    arrow_join.location = (450, 200)
-    ng.links.new(switch_node.outputs[0], arrow_join.inputs["Geometry"])
-
     set_mat_node = ng.nodes.new("GeometryNodeSetMaterial")
     set_mat_node.location = (600, 200)
-    ng.links.new(arrow_join.outputs["Geometry"], set_mat_node.inputs["Geometry"])
+    ng.links.new(switch_node.outputs[0], set_mat_node.inputs["Geometry"])
     ng.links.new(group_in.outputs["Material"], set_mat_node.inputs["Material"])
     ng.links.new(set_mat_node.outputs["Geometry"], group_out.inputs["Geometry"])
 
@@ -375,66 +378,6 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
         ng.links.new(pos_add.outputs["Vector"], dial.inputs["Position"])
         ng.links.new(up.outputs["Vector"], dial.inputs["Up"])
 
-        # Visible "which way increases the value" hint: a small cone sitting
-        # on the ring, pointing along the ring's increasing-angle tangent
-        # (right-hand rule around the Up/axis vector — same convention as the
-        # dial itself). Native GizmoDial has no built-in arrow marker, so
-        # this is baked into the actual mesh instead.
-        ref_axis = ("X", "Y", "Z")[(i + 1) % 3]
-        tangent_axis = ("X", "Y", "Z")[(i + 2) % 3]
-
-        ref_offset = ng.nodes.new("FunctionNodeInputVector")
-        ref_offset.location = (400, -2900 - 150 * i)
-        rv = [0.0, 0.0, 0.0]
-        rv[(i + 1) % 3] = 0.4
-        ref_offset.vector = rv
-
-        # Nudge outward along the face normal so the arrow reads as a
-        # protruding stud rather than sinking flush into the surface.
-        outward = ng.nodes.new("FunctionNodeInputVector")
-        outward.location = (400, -2650 - 150 * i)
-        ov = [0.0, 0.0, 0.0]
-        ov[i] = 0.18
-        outward.vector = ov
-
-        arrow_base_pos = ng.nodes.new("ShaderNodeVectorMath")
-        arrow_base_pos.operation = "ADD"
-        arrow_base_pos.location = (650, -2650 - 150 * i)
-        ng.links.new(pos_add.outputs["Vector"], arrow_base_pos.inputs[0])
-        ng.links.new(outward.outputs["Vector"], arrow_base_pos.inputs[1])
-
-        arrow_pos = ng.nodes.new("ShaderNodeVectorMath")
-        arrow_pos.operation = "ADD"
-        arrow_pos.location = (900, -2900 - 150 * i)
-        ng.links.new(arrow_base_pos.outputs["Vector"], arrow_pos.inputs[0])
-        ng.links.new(ref_offset.outputs["Vector"], arrow_pos.inputs[1])
-
-        tangent_dir = ng.nodes.new("FunctionNodeInputVector")
-        tangent_dir.location = (400, -3400 - 150 * i)
-        tv = [0.0, 0.0, 0.0]
-        tv[(i + 2) % 3] = 1.0
-        tangent_dir.vector = tv
-
-        align_rot = ng.nodes.new("FunctionNodeAlignEulerToVector")
-        align_rot.axis = "Z"
-        align_rot.location = (650, -3400 - 150 * i)
-        ng.links.new(tangent_dir.outputs["Vector"], align_rot.inputs["Vector"])
-
-        arrow_cone = ng.nodes.new("GeometryNodeMeshCone")
-        arrow_cone.location = (400, -3900 - 150 * i)
-        arrow_cone.inputs["Vertices"].default_value = 8
-        arrow_cone.inputs["Radius Bottom"].default_value = 0.13
-        arrow_cone.inputs["Radius Top"].default_value = 0.0
-        arrow_cone.inputs["Depth"].default_value = 0.3
-
-        arrow_transform = ng.nodes.new("GeometryNodeTransform")
-        arrow_transform.location = (900, -3900 - 150 * i)
-        ng.links.new(arrow_cone.outputs["Mesh"], arrow_transform.inputs["Geometry"])
-        ng.links.new(arrow_pos.outputs["Vector"], arrow_transform.inputs["Translation"])
-        ng.links.new(align_rot.outputs["Rotation"], arrow_transform.inputs["Rotation"])
-
-        ng.links.new(arrow_transform.outputs["Geometry"], arrow_join.inputs["Geometry"])
-
     # --- Pivot move gizmo (3-axis translate arrows), driving Corner Ratio
     # through the same offset math used to place the shape/other gizmos.
     combine_tf = ng.nodes.new("FunctionNodeCombineTransform")
@@ -470,6 +413,38 @@ def build_cube_gn(name="Cube"):
     getattr(mod.properties.inputs, mat_item.identifier).value = clay
 
     return obj
+
+
+def add_division_arrows(cube_obj, collection):
+    """3 child Empty (Single Arrow) objects marking which way each Division
+    dial increases its value. Real Empties, not GN geometry: never show up in
+    renders, but — unlike the mesh-cone version — stay fixed at the default
+    Size/Division layout if the shape is resized (a plain Empty's transform
+    isn't driven by the modifier). Placed to match the *default* Size=(2,2,2),
+    Division=(0,0,0), Corner Ratio=(0,0,0) gizmo positions.
+    """
+    arrows = []
+    for i, axis in enumerate(("X", "Y", "Z")):
+        ref_axis = (i + 1) % 3
+        tangent_axis = (i + 2) % 3
+
+        pos = mathutils.Vector((0.0, 0.0, 0.0))
+        pos[i] = 1.0 + 0.18
+        pos[ref_axis] = 0.4
+
+        tangent_vec = mathutils.Vector((0.0, 0.0, 0.0))
+        tangent_vec[tangent_axis] = 1.0
+
+        empty = bpy.data.objects.new(f"Division {axis} Arrow", None)
+        empty.empty_display_type = "SINGLE_ARROW"
+        empty.empty_display_size = 0.3
+        empty.location = pos
+        empty.rotation_mode = "QUATERNION"
+        empty.rotation_quaternion = mathutils.Vector((0.0, 0.0, 1.0)).rotation_difference(tangent_vec)
+        empty.parent = cube_obj
+        collection.objects.link(empty)
+        arrows.append(empty)
+    return arrows
 
 
 # ---------------------------------------------------------------------------
@@ -569,7 +544,7 @@ def render_thumbnail(obj, filepath, color):
     key.location = cam.location + mathutils.Vector((-1.0, -1.5, 2.0))
     key.rotation_euler = (center - key.location).to_track_quat("-Z", "Y").to_euler()
 
-    # Swap in the random-hue preview material just for this render — the
+    # Pass 1: shaded render with the random-hue preview material — the
     # shipped asset keeps its neutral clay material.
     preview_bsdf.inputs["Base Color"].default_value = color
     restore_material = swap_material(obj, preview_mat)
@@ -579,7 +554,49 @@ def render_thumbnail(obj, filepath, color):
     bpy.ops.render.render(write_still=True)
 
     restore_material()
+
+    # Pass 2: a duplicate with its mesh REPLACED by a Wireframe modifier
+    # (use_replace=True — pure edge tubes, no original faces), so there is
+    # only one material in play and no legacy material_offset/slot juggling
+    # against Geometry Nodes' own material handling (which doesn't line up
+    # with the traditional per-face material_index system). Composited over
+    # pass 1 with numpy (Blender's bundled Python has no Pillow).
+    wire_path = filepath + ".wire.png"
+    dup = obj.copy()
+    dup.data = obj.data.copy()
+    scene.collection.objects.link(dup)
+    obj.hide_render = True
+
+    wire_mod = dup.modifiers.new("Preview Wire", "WIREFRAME")
+    wire_mod.thickness = 0.012
+    wire_mod.use_replace = True
+    restore_wire_material = swap_material(dup, preview_wire_mat)
+    dup.update_tag(refresh={"DATA"})
+
+    scene.render.filepath = wire_path
+    bpy.ops.render.render(write_still=True)
+
+    restore_wire_material()
+    bpy.data.objects.remove(dup, do_unlink=True)
+    obj.hide_render = False
     obj.update_tag(refresh={"DATA"})
+
+    base_img = bpy.data.images.load(filepath)
+    wire_img = bpy.data.images.load(wire_path)
+    w, h = base_img.size
+    base_px = np.array(base_img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    wire_px = np.array(wire_img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    wa = wire_px[:, :, 3:4]
+    out = wire_px * wa + base_px * (1.0 - wa)
+    out[:, :, 3:4] = wa + base_px[:, :, 3:4] * (1.0 - wa)
+
+    base_img.pixels[:] = out.flatten().tolist()
+    base_img.filepath_raw = filepath
+    base_img.file_format = "PNG"
+    base_img.save()
+    bpy.data.images.remove(base_img)
+    bpy.data.images.remove(wire_img)
+    os.remove(wire_path)
 
     for o in hidden:
         o.hide_render = False
@@ -601,14 +618,8 @@ def set_custom_preview(obj, filepath):
 
 ASSETS = [
     # -- Base primitives ----------------------------------------------------
-    dict(
-        name="Cube", category="base",
-        make=lambda: build_cube_gn(),
-        shading=None, bevel=None, gn=True,
-        description="Parametric cube — Size/Division/pivot are live modifier "
-                    "inputs with viewport drag gizmos, not a fixed mesh.",
-        tags=["cube", "box", "primitive", "parametric"],
-    ),
+    # Cube is registered separately below as a Collection asset (object +
+    # its 3 direction-arrow Empties) — see register_cube_asset().
     dict(
         name="Sphere", category="base",
         make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_uv_sphere_add(radius=1, segments=32, ring_count=16)),
@@ -724,7 +735,38 @@ def _make_pyramid():
 catalog_for = {"base": CATALOG_BASE, "kit": CATALOG_KIT}
 collection_for = {"base": base_col, "kit": kit_col}
 
-for i, spec in enumerate(ASSETS):
+TOTAL_ASSETS = len(ASSETS) + 1  # +1 for the Cube collection asset
+
+
+def register_cube_asset():
+    """Cube ships as a Collection asset (object + 3 direction-arrow Empties),
+    not a bare Object asset, so the Empties travel along on drag-and-drop.
+    """
+    cube_col = bpy.data.collections.new("Cube")
+    base_col.children.link(cube_col)
+
+    obj = build_cube_gn()
+    cube_col.objects.link(obj)
+    add_division_arrows(obj, cube_col)
+
+    cube_col.asset_mark()
+    ad = cube_col.asset_data
+    ad.catalog_id = CATALOG_BASE
+    ad.description = ("Parametric cube — Size/Division/pivot are live modifier "
+                       "inputs with viewport drag gizmos, not a fixed mesh. "
+                       "The small arrows show which way each Division ring increases.")
+    for t in ["cube", "box", "primitive", "parametric"]:
+        ad.tags.new(t)
+
+    thumb_path = os.path.join(THUMB_DIR, "Cube.png")
+    render_thumbnail(obj, thumb_path, preview_color(0, TOTAL_ASSETS))
+    set_custom_preview(cube_col, thumb_path)
+    print("Built asset: Cube (base, collection)")
+
+
+register_cube_asset()
+
+for i, spec in enumerate(ASSETS, start=1):
     obj = spec["make"]()
     obj.name = spec["name"]
     obj.data.name = spec["name"]
@@ -738,7 +780,7 @@ for i, spec in enumerate(ASSETS):
     make_asset(obj, catalog_for[spec["category"]], spec["description"], spec["tags"])
 
     thumb_path = os.path.join(THUMB_DIR, f"{spec['name'].replace(' ', '_')}.png")
-    render_thumbnail(obj, thumb_path, preview_color(i, len(ASSETS)))
+    render_thumbnail(obj, thumb_path, preview_color(i, TOTAL_ASSETS))
     set_custom_preview(obj, thumb_path)
 
     print(f"Built asset: {spec['name']} ({spec['category']})")

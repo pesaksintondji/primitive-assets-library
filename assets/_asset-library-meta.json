@@ -2,7 +2,7 @@
   "api_versions": {
     "v1": {
       "url": "_v1/asset-index.json",
-      "hash": "SHA256:06cd65e1e3bb11c8166f9da29493bce41a29f53bb1d15ac86be889287bfb2226"
+      "hash": "SHA256:acebfca6ca89df4712e387c934bee822b96b06cd00ae5f0f9ded9407761c40f7"
     }
   },
   "name": "Primitive Assets Library",

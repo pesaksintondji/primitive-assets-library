@@ -3,6 +3,30 @@
   "file_count": 1,
   "assets": [
     {
+      "name": "Cube",
+      "id_type": "COLLECTION",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Collection/cube.webp",
+        "hash": "SHA256:1fdf8746183bb396a6dbdbda6e0514f4b33ce1e14d42f08f3f011e917e3723d6"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "cube",
+          "box",
+          "primitive",
+          "parametric"
+        ],
+        "description": "Parametric cube \u2014 Size/Division/pivot are live modifier inputs with viewport drag gizmos, not a fixed mesh. The small arrows show which way each Division ring increases."
+      }
+    },
+    {
       "name": "Cone",
       "id_type": "OBJECT",
       "files": [
@@ -13,7 +37,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cone.webp",
-        "hash": "SHA256:06d134876fa426e16b3a154c4bbf1f8f618b0e97085c1688dae7fae3d96fdf84"
+        "hash": "SHA256:6abd91d1e39576254b7a533f42f955f68a91b5e00a4d29eba6312e7b879279c2"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -37,30 +61,6 @@
       }
     },
     {
-      "name": "Cube",
-      "id_type": "OBJECT",
-      "files": [
-        "primitives.blend"
-      ],
-      "bl_versions": {
-        "min": "5.2"
-      },
-      "thumbnail": {
-        "url": "primitives_thumbnails/Object/cube.webp",
-        "hash": "SHA256:6239af8e1649bdf0b91a880738dd02827ca2692cc8ad8003c2bf5cb0a64635d3"
-      },
-      "meta": {
-        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
-        "tags": [
-          "cube",
-          "box",
-          "primitive",
-          "parametric"
-        ],
-        "description": "Parametric cube \u2014 Size/Division/pivot are live modifier inputs with viewport drag gizmos, not a fixed mesh."
-      }
-    },
-    {
       "name": "Cylinder",
       "id_type": "OBJECT",
       "files": [
@@ -71,7 +71,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cylinder.webp",
-        "hash": "SHA256:40ba15ce65b24c1e473c6b2afd1f8e9b97d6d0f72af1968360ba7f429d06874e"
+        "hash": "SHA256:5c6b5a4f25fd1735dcf9e329b5ca139b4cf500b2910b1ccc7e98695e42fb92f5"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -105,7 +105,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/dome.webp",
-        "hash": "SHA256:d531eeb490f4f663c0d8a858046e45a6efcb33a037dceffad020fef579e58061"
+        "hash": "SHA256:b2ea2b10ff5973705599e7fbe603f171563a651d98bf1a79102bd6c3c0cd1f5a"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -141,7 +141,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/hex-prism.webp",
-        "hash": "SHA256:0ad8eb7cacf148526d8b61c2d2c3421da23b42cdad731fdf63a743297786c535"
+        "hash": "SHA256:077999a9996747ceb15fbe0249f144cdbaf2093b54116bb02319ebea560510d7"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -177,7 +177,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/ico-sphere.webp",
-        "hash": "SHA256:81ef0d885220880651859f09ba6d6556c98a5f9f6890e79b878a5f2508a02925"
+        "hash": "SHA256:a7cc5923b7c67de857a5451c8b919cf051120c3c4d2856198bef1c41a736ded4"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -212,7 +212,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/plane.webp",
-        "hash": "SHA256:6a94d34d21597473a2103b8c91b577fc928b632c916ad9e61aa4abce8a42ef91"
+        "hash": "SHA256:75e3a01c1956f1483464ce0d50ec8edba4a11185ad779d32011345eb5b027f34"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -247,7 +247,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/pyramid.webp",
-        "hash": "SHA256:06a085c03ee609725ec813725c651659f6d7e240dd999062d31a55a65813f8dd"
+        "hash": "SHA256:74c8adbb2ca49c8ca09783da6da762c74f25b36328ad72dcd560479a14ec23b7"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -282,7 +282,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/rounded-cube.webp",
-        "hash": "SHA256:ef3f567b67c050661f67273526951861e36349708217cdbc0d7072913fdaf045"
+        "hash": "SHA256:99f81e14e87e0fc85a3985031565ad9f1cc281f4f5fe5fa2c2ec213ebe4a5336"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -318,7 +318,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/sphere.webp",
-        "hash": "SHA256:fc28f12311308cecf3f2af3c226b9ccbf35cab6dc9879c8f21603cd0639fb5cf"
+        "hash": "SHA256:1078ab4860c91c56ed3a08d9d32965974814213622d3bc432bf05eb5dae4e07f"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -353,7 +353,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/stairs.webp",
-        "hash": "SHA256:8f9a07027398d015c01e0e62fc92444231f3da49b10688f5553b8903c5d3eb27"
+        "hash": "SHA256:d96cd9205870da6826e9e29e8700e831a9463432c39e88ea93a856b10f054513"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -389,7 +389,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/torus.webp",
-        "hash": "SHA256:52bc41ed758388969519b950d853ce49c3abb4860f311734fccef12cb055afb6"
+        "hash": "SHA256:fa44561ab8daa25153248ae43aa3f3e71a010958cb1445aa96d68871d29c1d82"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -424,7 +424,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/tube.webp",
-        "hash": "SHA256:eb86931a5930074054572f731632d18bf242a59ab47c2efa1c816eda936c8adb"
+        "hash": "SHA256:f9b5df47e35439bee0f73eddb96756e61a5f1b721d5adafae98ffbaf16e14640"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -461,7 +461,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/wedge.webp",
-        "hash": "SHA256:1d18ec96ad4a6eb3e783b04a14942bf138202a6a3e0633083f8a477f643be56d"
+        "hash": "SHA256:a80a473808e43e15149f97265f0eb011091c9ecbf12af14abd0d2bdf4d102616"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -490,8 +490,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 523518,
-      "hash": "SHA256:fe762c924153d85e0e306a234080b000fad30b64e81c3f35826a99751772a48d",
+      "size_in_bytes": 700113,
+      "hash": "SHA256:5762316f38660d79b76d9dfab6693fa44f1b5fd6c900d373626efd192a3d2022",
       "blender_version": "5.2.44"
     }
   ]
