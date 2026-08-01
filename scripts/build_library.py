@@ -346,25 +346,43 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
         lin.name = f"Size {axis} Gizmo"
         lin.label = f"Size {axis} Gizmo"
         lin.location = (100, -900 - 150 * i)
+        lin.color_id = axis
         ng.links.new(sep_size.outputs[axis], lin.inputs["Value"])
         ng.links.new(pos_add.outputs["Vector"], lin.inputs["Position"])
         ng.links.new(direction.outputs["Vector"], lin.inputs["Direction"])
 
+        # Up = the same axis being controlled, so the ring is drawn
+        # perpendicular to (spinning around) that axis — turning it with the
+        # right-hand rule around +X/+Y/+Z increases the value.
         up = ng.nodes.new("FunctionNodeInputVector")
         up.location = (100, -1900 - 150 * i)
-        upvec = [0.0, 0.0, 0.0]
-        upvec[(i + 1) % 3] = 1.0
-        up.vector = upvec
+        up.vector = vec
 
         dial = ng.nodes.new("GeometryNodeGizmoDial")
         dial.name = f"Division {axis} Gizmo"
         dial.label = f"Division {axis} Gizmo"
         dial.location = (400, -900 - 150 * i)
+        dial.color_id = axis
         dial.inputs["Radius"].default_value = 0.4
         dial.inputs["Screen Space"].default_value = True
         ng.links.new(group_in.outputs[f"Division {axis}"], dial.inputs["Value"])
         ng.links.new(pos_add.outputs["Vector"], dial.inputs["Position"])
         ng.links.new(up.outputs["Vector"], dial.inputs["Up"])
+
+    # --- Pivot move gizmo (3-axis translate arrows), driving Corner Ratio
+    # through the same offset math used to place the shape/other gizmos.
+    combine_tf = ng.nodes.new("FunctionNodeCombineTransform")
+    combine_tf.location = (100, -2400)
+    ng.links.new(offset_node.outputs["Vector"], combine_tf.inputs["Translation"])
+
+    pivot_gizmo = ng.nodes.new("GeometryNodeGizmoTransform")
+    pivot_gizmo.name = "Pivot Gizmo"
+    pivot_gizmo.label = "Pivot Gizmo"
+    pivot_gizmo.location = (400, -2400)
+    pivot_gizmo.use_rotation_x = pivot_gizmo.use_rotation_y = pivot_gizmo.use_rotation_z = False
+    pivot_gizmo.use_scale_x = pivot_gizmo.use_scale_y = pivot_gizmo.use_scale_z = False
+    ng.links.new(combine_tf.outputs["Transform"], pivot_gizmo.inputs["Value"])
+    ng.links.new(offset_node.outputs["Vector"], pivot_gizmo.inputs["Position"])
 
     return ng
 
