@@ -47,28 +47,17 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cube.webp",
-        "hash": "SHA256:8b3e96ed0230b9168c84ab82ed2f7b717a9e3029dc6f6c21bf54621495df79db"
+        "hash": "SHA256:e175c8a3c4cf2e311b58b8ef1b718182f4db8314a8645c3729b0eb18cba71722"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "cube",
           "box",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Standard 2m cube.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric cube \u2014 Size/Division/pivot are live modifier inputs with viewport drag gizmos, not a fixed mesh."
       }
     },
     {
@@ -501,8 +490,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 514495,
-      "hash": "SHA256:38969c77d9f4e8751a79639c9f6ddb10455b86710987dd6206303e4fbd8b3cf3",
+      "size_in_bytes": 541003,
+      "hash": "SHA256:fd9611e98b01c9f37ada2aabf429d157f95e9f469e055750cf1cc6addb1e5918",
       "blender_version": "5.2.44"
     }
   ]

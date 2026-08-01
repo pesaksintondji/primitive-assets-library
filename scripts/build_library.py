@@ -197,6 +197,198 @@ def build_stairs(name="Stairs", steps=5, width=2.0, total_depth=2.0, total_heigh
 
 
 # ---------------------------------------------------------------------------
+# Parametric (Geometry Nodes) primitives — real modifier inputs + native
+# viewport gizmos (GeometryNodeGizmoLinear / GeometryNodeGizmoDial), so the
+# shape stays fully adjustable after being dragged in from the asset browser.
+# ---------------------------------------------------------------------------
+
+
+def ensure_smooth_by_angle_group():
+    """Make sure Blender's bundled 'Smooth by Angle' node group is loaded."""
+    existing = bpy.data.node_groups.get("Smooth by Angle")
+    if existing:
+        return existing
+    bpy.ops.mesh.primitive_plane_add()
+    tmp = bpy.context.active_object
+    tmp.select_set(True)
+    with bpy.context.temp_override(active_object=tmp, selected_editable_objects=[tmp], object=tmp):
+        bpy.ops.object.shade_auto_smooth(angle=math.radians(30))
+    bpy.data.objects.remove(tmp, do_unlink=True)
+    return bpy.data.node_groups["Smooth by Angle"]
+
+
+def build_cube_gn_group(name="[PrimLib] Cube"):
+    """Geometry Nodes group: parametric cube with Size/Division gizmos.
+
+    Interface: Size (vector), Division X/Y/Z (int), Corner Ratio (vector,
+    pivot control), Smooth (bool), Smooth Angle (float). Size is exposed as
+    3 linear drag gizmos on the +X/+Y/+Z faces; Division as 3 dial gizmos
+    at the same positions.
+    """
+    sba = ensure_smooth_by_angle_group()
+
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+
+    size_in = iface.new_socket(name="Size", in_out="INPUT", socket_type="NodeSocketVector")
+    size_in.default_value = (2.0, 2.0, 2.0)
+    size_in.min_value = 0.001
+
+    for axis in ("X", "Y", "Z"):
+        s = iface.new_socket(name=f"Division {axis}", in_out="INPUT", socket_type="NodeSocketInt")
+        s.default_value = 0
+        s.min_value = 0
+
+    corner_in = iface.new_socket(name="Corner Ratio", in_out="INPUT", socket_type="NodeSocketVector")
+    corner_in.default_value = (0.0, 0.0, 0.0)
+    corner_in.min_value = -1.0
+    corner_in.max_value = 1.0
+
+    smooth_in = iface.new_socket(name="Smooth", in_out="INPUT", socket_type="NodeSocketBool")
+    smooth_in.default_value = False
+
+    angle_in = iface.new_socket(name="Smooth Angle", in_out="INPUT", socket_type="NodeSocketFloat")
+    angle_in.subtype = "ANGLE"
+    angle_in.default_value = math.radians(30)
+
+    mat_in = iface.new_socket(name="Material", in_out="INPUT", socket_type="NodeSocketMaterial")
+    mat_in.default_value = clay
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_in.location = (-1100, 0)
+    group_out = ng.nodes.new("NodeGroupOutput")
+    group_out.location = (900, 0)
+
+    cube_node = ng.nodes.new("GeometryNodeMeshCube")
+    cube_node.location = (-700, 300)
+    ng.links.new(group_in.outputs["Size"], cube_node.inputs["Size"])
+
+    for i, axis in enumerate(("X", "Y", "Z")):
+        add = ng.nodes.new("ShaderNodeMath")
+        add.operation = "ADD"
+        add.inputs[1].default_value = 2.0
+        add.location = (-1100, -150 * (i + 1))
+        ng.links.new(group_in.outputs[f"Division {axis}"], add.inputs[0])
+        ng.links.new(add.outputs["Value"], cube_node.inputs[f"Vertices {axis}"])
+
+    # Pivot: offset = -(CornerRatio * Size * 0.5)
+    mul1 = ng.nodes.new("ShaderNodeVectorMath")
+    mul1.operation = "MULTIPLY"
+    mul1.location = (-700, -600)
+    ng.links.new(group_in.outputs["Corner Ratio"], mul1.inputs[0])
+    ng.links.new(group_in.outputs["Size"], mul1.inputs[1])
+
+    offset_node = ng.nodes.new("ShaderNodeVectorMath")
+    offset_node.operation = "SCALE"
+    offset_node.inputs["Scale"].default_value = -0.5
+    offset_node.location = (-450, -600)
+    ng.links.new(mul1.outputs["Vector"], offset_node.inputs["Vector"])
+
+    transform_node = ng.nodes.new("GeometryNodeTransform")
+    transform_node.location = (-300, 300)
+    ng.links.new(cube_node.outputs["Mesh"], transform_node.inputs["Geometry"])
+    ng.links.new(offset_node.outputs["Vector"], transform_node.inputs["Translation"])
+
+    sba_node = ng.nodes.new("GeometryNodeGroup")
+    sba_node.node_tree = sba
+    sba_node.location = (0, 300)
+    ng.links.new(transform_node.outputs["Geometry"], sba_node.inputs[0])
+    ng.links.new(group_in.outputs["Smooth Angle"], sba_node.inputs["Angle"])
+
+    switch_node = ng.nodes.new("GeometryNodeSwitch")
+    switch_node.input_type = "GEOMETRY"
+    switch_node.location = (300, 200)
+    ng.links.new(group_in.outputs["Smooth"], switch_node.inputs["Switch"])
+    ng.links.new(transform_node.outputs["Geometry"], switch_node.inputs[False])
+    ng.links.new(sba_node.outputs[0], switch_node.inputs[True])
+
+    set_mat_node = ng.nodes.new("GeometryNodeSetMaterial")
+    set_mat_node.location = (600, 200)
+    ng.links.new(switch_node.outputs[0], set_mat_node.inputs["Geometry"])
+    ng.links.new(group_in.outputs["Material"], set_mat_node.inputs["Material"])
+    ng.links.new(set_mat_node.outputs["Geometry"], group_out.inputs["Geometry"])
+
+    # --- Gizmos: Size (linear drag) + Division (dial) per axis, positioned
+    # at the corresponding face center (following the pivot offset).
+    sep_size = ng.nodes.new("ShaderNodeSeparateXYZ")
+    sep_size.location = (-700, -900)
+    ng.links.new(group_in.outputs["Size"], sep_size.inputs["Vector"])
+
+    half_axis_vecs = {}
+    for i, axis in enumerate(("X", "Y", "Z")):
+        combine = ng.nodes.new("ShaderNodeCombineXYZ")
+        combine.location = (-450, -900 - 150 * i)
+        half = ng.nodes.new("ShaderNodeMath")
+        half.operation = "MULTIPLY"
+        half.inputs[1].default_value = 0.5
+        half.location = (-600, -900 - 150 * i)
+        ng.links.new(sep_size.outputs[axis], half.inputs[0])
+        ng.links.new(half.outputs["Value"], combine.inputs[axis])
+        half_axis_vecs[axis] = combine
+
+    for i, axis in enumerate(("X", "Y", "Z")):
+        pos_add = ng.nodes.new("ShaderNodeVectorMath")
+        pos_add.operation = "ADD"
+        pos_add.location = (-200, -900 - 150 * i)
+        ng.links.new(offset_node.outputs["Vector"], pos_add.inputs[0])
+        ng.links.new(half_axis_vecs[axis].outputs["Vector"], pos_add.inputs[1])
+
+        direction = ng.nodes.new("FunctionNodeInputVector")
+        direction.location = (-200, -1400 - 150 * i)
+        vec = [0.0, 0.0, 0.0]
+        vec[i] = 1.0
+        direction.vector = vec
+
+        lin = ng.nodes.new("GeometryNodeGizmoLinear")
+        lin.name = f"Size {axis} Gizmo"
+        lin.label = f"Size {axis} Gizmo"
+        lin.location = (100, -900 - 150 * i)
+        ng.links.new(sep_size.outputs[axis], lin.inputs["Value"])
+        ng.links.new(pos_add.outputs["Vector"], lin.inputs["Position"])
+        ng.links.new(direction.outputs["Vector"], lin.inputs["Direction"])
+
+        up = ng.nodes.new("FunctionNodeInputVector")
+        up.location = (100, -1900 - 150 * i)
+        upvec = [0.0, 0.0, 0.0]
+        upvec[(i + 1) % 3] = 1.0
+        up.vector = upvec
+
+        dial = ng.nodes.new("GeometryNodeGizmoDial")
+        dial.name = f"Division {axis} Gizmo"
+        dial.label = f"Division {axis} Gizmo"
+        dial.location = (400, -900 - 150 * i)
+        dial.inputs["Radius"].default_value = 0.4
+        dial.inputs["Screen Space"].default_value = True
+        ng.links.new(group_in.outputs[f"Division {axis}"], dial.inputs["Value"])
+        ng.links.new(pos_add.outputs["Vector"], dial.inputs["Position"])
+        ng.links.new(up.outputs["Vector"], dial.inputs["Up"])
+
+    return ng
+
+
+def build_cube_gn(name="Cube"):
+    """Object with an empty base mesh + the parametric Cube GN modifier."""
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+    mod = obj.modifiers.new("Modern Cube", "NODES")
+    mod.node_group = build_cube_gn_group()
+
+    # The modifier's own stored input value does NOT inherit the interface's
+    # default_value automatically for Material sockets — set it explicitly,
+    # otherwise it ships as None (invisible/fallback-grey in the viewport).
+    mat_item = next(
+        it for it in mod.node_group.interface.items_tree
+        if it.item_type == "SOCKET" and it.socket_type == "NodeSocketMaterial"
+    )
+    getattr(mod.properties.inputs, mat_item.identifier).value = clay
+
+    return obj
+
+
+# ---------------------------------------------------------------------------
 # Shading / modifiers / asset metadata helpers
 # ---------------------------------------------------------------------------
 
@@ -219,6 +411,43 @@ def apply_shading(obj, mode):
     if mode == "auto":
         with bpy.context.temp_override(active_object=obj, selected_editable_objects=[obj], object=obj):
             bpy.ops.object.shade_auto_smooth(angle=math.radians(30))
+
+
+def find_gn_material_input(obj):
+    """Return the modifier's Material input (properties.inputs.SocketN), if any.
+
+    Geometry Nodes-generated geometry ignores obj.data.materials unless a
+    Set Material node inside the tree is wired to an exposed Material input
+    — that's the only place swapping the material actually has an effect.
+    """
+    for mod in obj.modifiers:
+        if mod.type != "NODES" or not mod.node_group:
+            continue
+        for item in mod.node_group.interface.items_tree:
+            if (item.item_type == "SOCKET" and item.in_out == "INPUT"
+                    and item.socket_type == "NodeSocketMaterial"):
+                return getattr(mod.properties.inputs, item.identifier)
+    return None
+
+
+def swap_material(obj, material):
+    """Swap obj's material for `material`; returns a callback that restores it."""
+    gn_input = find_gn_material_input(obj)
+    if gn_input is not None:
+        old = gn_input.value
+        gn_input.value = material
+        return lambda: setattr(gn_input, "value", old)
+
+    shipped_mats = list(obj.data.materials)
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
+
+    def restore():
+        obj.data.materials.clear()
+        for m in shipped_mats:
+            obj.data.materials.append(m)
+
+    return restore
 
 
 def make_asset(obj, catalog_uuid, description, tags):
@@ -252,17 +481,15 @@ def render_thumbnail(obj, filepath, color):
 
     # Swap in the random-hue preview material just for this render — the
     # shipped asset keeps its neutral clay material.
-    shipped_mats = list(obj.data.materials)
     preview_bsdf.inputs["Base Color"].default_value = color
-    obj.data.materials.clear()
-    obj.data.materials.append(preview_mat)
+    restore_material = swap_material(obj, preview_mat)
+    obj.update_tag(refresh={"DATA"})
 
     scene.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
 
-    obj.data.materials.clear()
-    for m in shipped_mats:
-        obj.data.materials.append(m)
+    restore_material()
+    obj.update_tag(refresh={"DATA"})
 
     for o in hidden:
         o.hide_render = False
@@ -286,10 +513,11 @@ ASSETS = [
     # -- Base primitives ----------------------------------------------------
     dict(
         name="Cube", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_cube_add(size=2)),
-        shading="flat", bevel=None,
-        description="Standard 2m cube.",
-        tags=["cube", "box", "primitive"],
+        make=lambda: build_cube_gn(),
+        shading=None, bevel=None, gn=True,
+        description="Parametric cube — Size/Division/pivot are live modifier "
+                    "inputs with viewport drag gizmos, not a fixed mesh.",
+        tags=["cube", "box", "primitive", "parametric"],
     ),
     dict(
         name="Sphere", category="base",
@@ -411,11 +639,11 @@ for i, spec in enumerate(ASSETS):
     obj.name = spec["name"]
     obj.data.name = spec["name"]
     collection_for[spec["category"]].objects.link(obj)
-    obj.data.materials.append(clay)
-
-    if spec["bevel"]:
-        add_bevel(obj, *spec["bevel"])
-    apply_shading(obj, spec["shading"])
+    if not spec.get("gn"):
+        obj.data.materials.append(clay)
+        if spec["bevel"]:
+            add_bevel(obj, *spec["bevel"])
+        apply_shading(obj, spec["shading"])
 
     make_asset(obj, catalog_for[spec["category"]], spec["description"], spec["tags"])
 
