@@ -137,14 +137,20 @@ entry should appear, marked as a remote (globe icon) library.
 > error).
 
 > **Stale cache after an update:** this repo's `.blend` gets rebuilt from
-> scratch fairly often, and Blender caches the downloaded listing + `.blend`
-> locally. If a newly-added or renamed asset gives an error like *"Asset could
-> not be found (relative identifier: 'primitives.blend/Object/...')"* even
-> though it's clearly in the index, the local cache is out of date — with the
-> *Primitives* library active in the Asset Browser, run
-> `bpy.ops.asset.library_reload_listing()` (there's also a refresh option in
-> the Asset Browser's header) to force Blender to re-fetch the listing and
-> `.blend` instead of trusting what it already downloaded.
+> scratch fairly often. If a newly-added or renamed asset gives an error like
+> *"Asset could not be found (relative identifier: 'primitives.blend/Object/...')"*
+> even though it's clearly in the index, Blender downloaded and cached an older
+> copy of `primitives.blend` and hasn't refreshed it — confirmed by
+> reproducing the exact error against a deliberately stale cache.
+> `bpy.ops.asset.library_reload_listing()` only refreshes the lightweight
+> listing/catalog files, **not** the cached `.blend` payload itself, so it
+> alone won't fix this. The reliable fix: open **Edit ▸ Preferences ▸ File
+> Paths ▸ Asset Libraries**, select this library, note its **Path** (a local
+> cache folder, not the GitHub URL), close Blender, and delete that folder's
+> contents on disk (or at least `primitives.blend` and the `_v1/` folder in
+> it) — then reopen Blender so it re-downloads everything fresh. On Linux
+> this cache typically lives under `~/.cache/blender/remote-assets/<hash>/`
+> (or, for the Flatpak build, `~/.var/app/org.blender.Blender/cache/blender/remote-assets/<hash>/`).
 
 ### Option B — Local folder library (any Blender version with Asset Browser)
 
