@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "asset_size_bytes": 896292,
-  "asset_count": 18,
+  "asset_size_bytes": 940179,
+  "asset_count": 19,
   "file_count": 1,
   "pages": [
     {
       "url": "_v1/assets-00000.json",
-      "hash": "SHA256:916d48f85d221ba30371ddd401e56ea31db6cb011850d2455ed033a9a3ac71dc"
+      "hash": "SHA256:14d76083b1332117b7ad5e3f5c3e3f49ec0c7405bdee1bd45df6fa21757dc5c4"
     }
   ],
   "catalogs": [
@@ -23,6 +23,13 @@
         "7bc7ab05-58e9-42ee-821b-feea30abdfb6"
       ],
       "simple_name": "Hard-Surface-Kit"
+    },
+    {
+      "path": "Primitives/Rigged",
+      "uuids": [
+        "c89c7285-5d3b-4231-83b3-fc2cb0a75fb1"
+      ],
+      "simple_name": "Rigged"
     }
   ]
 }

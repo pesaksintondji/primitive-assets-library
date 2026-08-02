@@ -1,7 +1,34 @@
 {
-  "asset_count": 18,
+  "asset_count": 19,
   "file_count": 1,
   "assets": [
+    {
+      "name": "Bean",
+      "id_type": "COLLECTION",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Collection/bean.webp",
+        "hash": "SHA256:e9c8f707b7919515bf561e4d9aa45380d1a1590f4e4c854b3e4fc3b7fa7e7ef5"
+      },
+      "meta": {
+        "catalog_id": "c89c7285-5d3b-4231-83b3-fc2cb0a75fb1",
+        "tags": [
+          "bean",
+          "rig",
+          "armature",
+          "animated",
+          "bendy",
+          "skin-modifier",
+          "rigged"
+        ],
+        "description": "Animated bean/pod rig \u2014 mesh (Skin modifier, per-vertex radius) + armature with 3 pose handles (Start/Middle/End, both move AND rotate bend it) plus a live Inflate modifier input. Ships as a Collection asset so drag-and-drop brings the armature along with the mesh."
+      }
+    },
     {
       "name": "Capsule",
       "id_type": "OBJECT",
@@ -448,8 +475,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 896292,
-      "hash": "SHA256:0fd83c58a5489a2d2be893f35ff638a8a123b5395603b0c97696f40ee9ae3784",
+      "size_in_bytes": 940179,
+      "hash": "SHA256:75578a188151cd744cb82dd1e0b3ffc1f051c27d371a56668d8f713b841c3727",
       "blender_version": "5.2.44"
     }
   ]

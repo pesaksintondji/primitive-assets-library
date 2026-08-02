@@ -10,8 +10,8 @@ thumbnailed.
 
 ## What's inside
 
-One file, `assets/primitives.blend`, containing 18 assets, every single one
-parametric, organized under a **Primitives** catalog with two sub-catalogs:
+One file, `assets/primitives.blend`, containing 19 assets, organized under a
+**Primitives** catalog with three sub-catalogs:
 
 **Primitives / Base** — the classic primitives, plus two more from the *Modern Primitives* set
 - Cube, Sphere, Ico Sphere, Cylinder, Cone, Torus, Plane, Quad Sphere, Capsule
@@ -19,6 +19,9 @@ parametric, organized under a **Primitives** catalog with two sub-catalogs:
 **Primitives / Hard Surface Kit** — kitbash-ready pieces, including two mechanical parts
 - Rounded Cube, Tube (hollow cylinder), Dome (half-sphere), Wedge, Stairs,
   Pyramid, Hex Prism, Gear, Spring
+
+**Primitives / Rigged** — the one non-parametric, non-static-mesh asset in the set
+- Bean — a posable, animatable bean/pod (see below)
 
 Every asset has a rendered preview thumbnail (shaded + wireframe overlay, so topology
 reads at a glance), a description and search tags, and lives in its catalog so it
@@ -106,6 +109,43 @@ marker — there isn't a clean way to add one without extra geometry or child
 objects riding along on drag-and-drop, so these ship without one; the direction
 convention is a consistent right-hand-rule per axis across all shapes once you
 turn it once.
+
+### Bean — a rigged, animatable primitive
+
+Every other asset in this library is a single Object driving its own Geometry
+Nodes modifier. Bean isn't: it's a **mesh + armature pair**, so it ships as a
+**Collection asset** instead — the only way a mesh and the armature it depends
+on survive drag-and-drop together (a plain Object asset would bring the mesh
+in without the armature that deforms it).
+
+- The mesh has only **3 real vertices** (Start/Middle/End), shaped by a
+  **Skin modifier** (per-vertex radius — small-big-small gives the tapered
+  pod silhouette) and a Subdivision Surface modifier. Skin natively rounds
+  off any loose end, so there's no boolean-hemisphere-cap construction (and
+  no seam to weld) at all.
+- The armature has **3 pose handles** — `Bean_StartCtrl`, `Bean_MidCtrl`,
+  `Bean_EndCtrl` — and both **moving and rotating** them bends the shape.
+  They drive 2 real deforming bones through a `Stretch To` constraint (reach,
+  responds to movement) combined with bendy-bone `Tangent` handles (curve
+  shape, responds to rotation) — either alone isn't enough, only the
+  combination gives both. `Bean_MidCtrl` also auto-follows the natural
+  midpoint of the Start–End curve if you only touch the other two, and can
+  still be moved/rotated further on top of that for manual fine-tuning.
+- A **Bone Collection** split keeps the viewport clean: the 3 handles are in
+  a visible "Controls" collection, everything else (the root and internal
+  reference bones) is in a hidden "Mechanism" one — toggle it in the
+  Armature data tab if you need to see or tweak the internals.
+- A separate, always-live **"Bean Inflate"** Geometry Nodes modifier (after
+  Armature/Skin/Subsurf in the stack) exposes a single `Inflate` value that
+  uniformly rescales the whole already-posed shape from its base — unlike
+  the shape-defining 3 vertices, a plain rescale has no vertex-correspondence
+  requirement, so this one stays editable at any time without needing to be
+  baked or rebuilt.
+
+To animate: select `Bean_Armature`, enter Pose Mode, move or rotate the 3
+`Ctrl` bones, keyframe them. To restyle the silhouette: Edit Mode on the
+`Bean` object, select a vertex, adjust its radius in the N-panel's Item tab
+(Skin Vertices) or with Ctrl+A.
 
 ## Installing it as an Asset Library
 

@@ -16,6 +16,7 @@ ORDER = [
     "Quad_Sphere", "Capsule",
     "Rounded_Cube", "Tube", "Dome", "Wedge", "Stairs", "Pyramid", "Hex_Prism",
     "Gear", "Spring",
+    "Bean",
 ]
 
 COLS = 7

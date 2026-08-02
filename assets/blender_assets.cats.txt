@@ -8,3 +8,4 @@ VERSION 1
 
 6f46c395-e541-49e2-805e-6b76b228386c:Primitives/Base:Base
 7bc7ab05-58e9-42ee-821b-feea30abdfb6:Primitives/Hard Surface Kit:Hard-Surface-Kit
+c89c7285-5d3b-4231-83b3-fc2cb0a75fb1:Primitives/Rigged:Rigged

@@ -31,6 +31,7 @@ THUMB_DIR = os.path.join(ASSETS_DIR, ".thumbs")
 
 CATALOG_BASE = "6f46c395-e541-49e2-805e-6b76b228386c"
 CATALOG_KIT = "7bc7ab05-58e9-42ee-821b-feea30abdfb6"
+CATALOG_RIGGED = "c89c7285-5d3b-4231-83b3-fc2cb0a75fb1"
 
 os.makedirs(ASSETS_DIR, exist_ok=True)
 os.makedirs(THUMB_DIR, exist_ok=True)
@@ -101,6 +102,8 @@ base_col = bpy.data.collections.new("Base")
 scene.collection.children.link(base_col)
 kit_col = bpy.data.collections.new("Hard Surface Kit")
 scene.collection.children.link(kit_col)
+rigged_col = bpy.data.collections.new("Rigged")
+scene.collection.children.link(rigged_col)
 
 # ---------------------------------------------------------------------------
 # Parametric (Geometry Nodes) primitives — real modifier inputs + native
@@ -1549,6 +1552,306 @@ def build_spring_gn_group(name="[PrimLib] Spring"):
 
 
 # ---------------------------------------------------------------------------
+# Rigged assets — mesh + armature, NOT a single Geometry Nodes object like
+# everything above. Dragging a plain Object asset from the browser does not
+# bring along other objects it depends on (an Armature modifier's target,
+# in this case), so this one ships as a COLLECTION asset instead — the only
+# way a mesh+armature pair survives drag-and-drop as a working unit.
+# ---------------------------------------------------------------------------
+
+BEAN_LENGTH = 2.0
+BEAN_START_RADIUS = 0.12
+BEAN_MID_RADIUS = 0.45
+BEAN_END_RADIUS = 0.15
+BEAN_SUBSURF_LEVELS = 2
+BEAN_BBONE_SEGMENTS = 16
+
+
+def build_bean_skin_mesh_object():
+    """Empty-shaped-by-modifiers mesh: 3 real vertices (Start/Middle/End)
+    joined by 2 edges. A Skin modifier turns this into a tapered tube with
+    natively round caps (any degree-1 vertex gets auto-capped) — no boolean
+    hemisphere-cutting/Merge By Distance needed, and no vertex-count
+    mismatch possible since there's no seam to weld at all."""
+    import bmesh
+
+    mid_z = BEAN_LENGTH / 2.0
+    mesh = bpy.data.meshes.new("Bean_Mesh")
+    obj = bpy.data.objects.new("Bean", mesh)
+
+    bm = bmesh.new()
+    v0 = bm.verts.new((0, 0, 0))
+    v1 = bm.verts.new((0, 0, mid_z))
+    v2 = bm.verts.new((0, 0, BEAN_LENGTH))
+    bm.verts.ensure_lookup_table()
+    bm.edges.new((v0, v1))
+    bm.edges.new((v1, v2))
+    bm.to_mesh(mesh)
+    bm.free()
+
+    vg_seg1 = obj.vertex_groups.new(name="Bean_Seg1")
+    vg_seg2 = obj.vertex_groups.new(name="Bean_Seg2")
+    vg_seg1.add([0, 1], 1.0, 'REPLACE')  # Start + the shared Middle joint
+    vg_seg2.add([2], 1.0, 'REPLACE')     # End
+
+    return obj
+
+
+def build_bean_armature():
+    """3 posable control bones (Start/Middle/End, both translate AND rotate
+    bend the shape) driving 2 real deforming bones via Stretch To (reach)
+    + Tangent handles (curve response to rotation) — see the design notes
+    in the project's scratch script for the two bugs this combination fixes
+    (inherit_scale compounding at the connected joint, and handle bones
+    needing to point forward, not backward, since a Tangent handle reads
+    its own head->tail direction as the tangent it hands to the bendy
+    bone)."""
+    bpy.ops.object.armature_add(enter_editmode=True, location=(0, 0, 0))
+    arm_obj = bpy.context.object
+    arm_obj.name = "Bean_Armature"
+    arm_obj.data.name = "Bean_Armature_Data"
+
+    eb = arm_obj.data.edit_bones
+    eb.remove(eb[0])
+
+    mid_z = BEAN_LENGTH / 2.0
+    stub = (BEAN_START_RADIUS + BEAN_MID_RADIUS + BEAN_END_RADIUS) / 3.0 * 1.5
+
+    root = eb.new("Bean_Root")
+    root.head = (0, 0, 0)
+    root.tail = (stub, 0, 0)
+    root.use_deform = False
+
+    start_ctrl = eb.new("Bean_StartCtrl")
+    start_ctrl.head = (0, 0, 0)
+    start_ctrl.tail = (0, 0, stub)
+    start_ctrl.use_deform = False
+    start_ctrl.parent = root
+
+    end_ctrl = eb.new("Bean_EndCtrl")
+    end_ctrl.head = (0, 0, BEAN_LENGTH)
+    end_ctrl.tail = (0, 0, BEAN_LENGTH + stub)
+    end_ctrl.use_deform = False
+    end_ctrl.parent = root
+
+    start_offset = eb.new("Bean_StartCtrl_Offset")
+    start_offset.head = (0, 0, 0)
+    start_offset.tail = (0, 0, stub)
+    start_offset.use_deform = False
+    start_offset.parent = root
+
+    bbone_base = eb.new("Bean_BBoneBase")
+    bbone_base.head = (0, 0, 0)
+    bbone_base.tail = (0, 0, BEAN_LENGTH)
+    bbone_base.bbone_segments = BEAN_BBONE_SEGMENTS
+    bbone_base.use_deform = False
+    bbone_base.parent = start_offset
+    bbone_base.bbone_handle_type_start = 'TANGENT'
+    bbone_base.bbone_custom_handle_start = start_offset
+    bbone_base.bbone_handle_type_end = 'TANGENT'
+    bbone_base.bbone_custom_handle_end = end_ctrl
+
+    mid_offset = eb.new("Bean_MidCtrl_Offset")
+    mid_offset.head = (0, 0, mid_z)
+    mid_offset.tail = (0, 0, mid_z + stub)
+    mid_offset.use_deform = False
+    mid_offset.parent = root
+
+    mid_ctrl = eb.new("Bean_MidCtrl")
+    mid_ctrl.head = (0, 0, mid_z)
+    mid_ctrl.tail = (0, 0, mid_z + stub)
+    mid_ctrl.use_deform = False
+    mid_ctrl.parent = mid_offset
+    mid_ctrl.inherit_scale = 'NONE'
+
+    seg1 = eb.new("Bean_Seg1")
+    seg1.head = (0, 0, 0)
+    seg1.tail = (0, 0, mid_z)
+    seg1.bbone_segments = BEAN_BBONE_SEGMENTS
+    seg1.use_deform = True
+    seg1.parent = start_offset
+    seg1.bbone_handle_type_start = 'TANGENT'
+    seg1.bbone_custom_handle_start = start_offset
+    seg1.bbone_handle_type_end = 'TANGENT'
+    seg1.bbone_custom_handle_end = mid_ctrl
+    seg1.inherit_scale = 'NONE'
+
+    seg2 = eb.new("Bean_Seg2")
+    seg2.head = (0, 0, mid_z)
+    seg2.tail = (0, 0, BEAN_LENGTH)
+    seg2.bbone_segments = BEAN_BBONE_SEGMENTS
+    seg2.use_deform = True
+    seg2.parent = seg1
+    seg2.use_connect = True
+    seg2.bbone_handle_type_start = 'TANGENT'
+    seg2.bbone_custom_handle_start = mid_ctrl
+    seg2.bbone_handle_type_end = 'TANGENT'
+    seg2.bbone_custom_handle_end = end_ctrl
+    seg2.inherit_scale = 'NONE'
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    arm_obj.data.display_type = 'BBONE'
+    arm_obj.show_in_front = True
+
+    pb = arm_obj.pose.bones
+
+    c = pb["Bean_StartCtrl_Offset"].constraints.new('COPY_LOCATION')
+    c.target = arm_obj
+    c.subtarget = "Bean_StartCtrl"
+
+    c = pb["Bean_StartCtrl_Offset"].constraints.new('COPY_ROTATION')
+    c.target = arm_obj
+    c.subtarget = "Bean_StartCtrl"
+
+    c = pb["Bean_BBoneBase"].constraints.new('STRETCH_TO')
+    c.target = arm_obj
+    c.subtarget = "Bean_EndCtrl"
+    c.rest_length = BEAN_LENGTH
+
+    c = pb["Bean_MidCtrl_Offset"].constraints.new('COPY_TRANSFORMS')
+    c.target = arm_obj
+    c.subtarget = "Bean_BBoneBase"
+    c.head_tail = 0.5
+    c.use_bbone_shape = True
+
+    c = pb["Bean_Seg1"].constraints.new('STRETCH_TO')
+    c.target = arm_obj
+    c.subtarget = "Bean_MidCtrl"
+    c.rest_length = mid_z
+
+    c = pb["Bean_Seg2"].constraints.new('STRETCH_TO')
+    c.target = arm_obj
+    c.subtarget = "Bean_EndCtrl"
+    c.rest_length = BEAN_LENGTH - mid_z
+
+    for bname in ("Bean_StartCtrl", "Bean_MidCtrl", "Bean_EndCtrl"):
+        pb[bname].rotation_mode = 'XYZ'
+
+    setup_bean_bone_collections(arm_obj)
+
+    return arm_obj
+
+
+def setup_bean_bone_collections(arm_obj):
+    """3 pose handles in a visible "Controls" collection; the internal
+    mechanism (Root, the 2 _Offset bones, BBoneBase, Seg1/Seg2) in a hidden
+    "Mechanism" one, so the viewport only shows what you actually grab."""
+    data = arm_obj.data
+    controls = data.collections.new("Controls")
+    mechanism = data.collections.new("Mechanism")
+    mechanism.is_visible = False
+
+    control_names = {"Bean_StartCtrl", "Bean_MidCtrl", "Bean_EndCtrl"}
+    for b in data.bones:
+        if b.name in control_names:
+            controls.assign(b)
+        else:
+            mechanism.assign(b)
+
+    default_coll = data.collections.get("Bones")
+    if default_coll is not None:
+        data.collections.remove(default_coll)
+
+
+def rig_bean_mesh_to_armature(mesh_obj, arm_obj):
+    mesh_obj.parent = arm_obj
+    mesh_obj.matrix_parent_inverse = arm_obj.matrix_world.inverted()
+
+    # Armature FIRST in the stack: it only ever touches the 3 real base
+    # vertices (1-vertex-1-weight-1-bone, no blending to calibrate), so
+    # Skin/Subsurf below always start from the already-bent skeleton rather
+    # than needing to propagate weights through generated geometry.
+    arm_mod = mesh_obj.modifiers.new("Armature", 'ARMATURE')
+    arm_mod.object = arm_obj
+    arm_mod.use_vertex_groups = True
+    arm_mod.use_bone_envelopes = False
+    arm_mod.use_deform_preserve_volume = True
+
+    skin_mod = mesh_obj.modifiers.new("Skin", 'SKIN')
+    skin_mod.use_smooth_shade = True
+    sv = mesh_obj.data.skin_vertices[0].data
+    sv[0].radius = (BEAN_START_RADIUS, BEAN_START_RADIUS)
+    sv[1].radius = (BEAN_MID_RADIUS, BEAN_MID_RADIUS)
+    sv[2].radius = (BEAN_END_RADIUS, BEAN_END_RADIUS)
+
+    subsurf_mod = mesh_obj.modifiers.new("Subsurf", 'SUBSURF')
+    subsurf_mod.levels = BEAN_SUBSURF_LEVELS
+    subsurf_mod.render_levels = BEAN_SUBSURF_LEVELS
+
+
+def add_bean_inflate_modifier(mesh_obj):
+    """A second, independent Geometry Nodes modifier, after Armature/Skin/
+    Subsurf, exposing one "Inflate" float that uniformly scales the
+    already-posed shape from the object's own origin. Kept separate from
+    the (non-existent, here — Bean has no shape-generating GN group to
+    apply) primitive pattern used elsewhere: a plain post-pose scale has no
+    vertex-correspondence requirements, so it can stay live indefinitely."""
+    ng = bpy.data.node_groups.new("GN_Bean_Inflate", 'GeometryNodeTree')
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    iface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+    inflate_in = iface.new_socket(name="Inflate", in_out='INPUT', socket_type='NodeSocketFloat')
+    inflate_in.default_value = 1.0
+    inflate_in.min_value = 0.01
+
+    nodes = ng.nodes
+    links = ng.links
+    group_in = nodes.new('NodeGroupInput')
+    group_out = nodes.new('NodeGroupOutput')
+
+    combine = nodes.new('ShaderNodeCombineXYZ')
+    links.new(group_in.outputs['Inflate'], combine.inputs['X'])
+    links.new(group_in.outputs['Inflate'], combine.inputs['Y'])
+    links.new(group_in.outputs['Inflate'], combine.inputs['Z'])
+
+    tf = nodes.new('GeometryNodeTransform')
+    links.new(group_in.outputs['Geometry'], tf.inputs['Geometry'])
+    links.new(combine.outputs['Vector'], tf.inputs['Scale'])
+    links.new(tf.outputs['Geometry'], group_out.inputs['Geometry'])
+
+    mod = mesh_obj.modifiers.new("Bean Inflate", 'NODES')
+    mod.node_group = ng
+    getattr(mod.properties.inputs, inflate_in.identifier).value = 1.0
+    return mod
+
+
+def build_bean_asset(parent_collection, index, total):
+    """Builds the Bean mesh+armature pair inside its OWN dedicated "Bean"
+    collection (a child of `parent_collection`, which is just scene
+    organization like Base/Hard Surface Kit and is never itself an asset).
+    That "Bean" collection is what actually gets marked as the (Collection-
+    type) asset — marking `parent_collection` directly would make the
+    asset show up named "Rigged" in the browser instead of "Bean"."""
+    bean_collection = bpy.data.collections.new("Bean")
+    parent_collection.children.link(bean_collection)
+
+    mesh_obj = build_bean_skin_mesh_object()
+    bean_collection.objects.link(mesh_obj)
+    arm_obj = build_bean_armature()
+    bean_collection.objects.link(arm_obj)
+    rig_bean_mesh_to_armature(mesh_obj, arm_obj)
+    add_bean_inflate_modifier(mesh_obj)
+
+    bean_collection.asset_mark()
+    ad = bean_collection.asset_data
+    ad.catalog_id = CATALOG_RIGGED
+    ad.description = ("Animated bean/pod rig — mesh (Skin modifier, per-vertex "
+                       "radius) + armature with 3 pose handles (Start/Middle/End, "
+                       "both move AND rotate bend it) plus a live Inflate "
+                       "modifier input. Ships as a Collection asset so drag-and-"
+                       "drop brings the armature along with the mesh.")
+    for t in ("bean", "rig", "armature", "animated", "bendy", "skin-modifier", "rigged"):
+        ad.tags.new(t)
+
+    thumb_path = os.path.join(THUMB_DIR, "Bean.png")
+    render_thumbnail(mesh_obj, thumb_path, preview_color(index, total))
+    set_custom_preview(bean_collection, thumb_path)
+
+    print("Built asset: Bean (rigged)")
+
+
+# ---------------------------------------------------------------------------
 # Shading / modifiers / asset metadata helpers
 # ---------------------------------------------------------------------------
 
@@ -1879,6 +2182,8 @@ ASSETS = [
 catalog_for = {"base": CATALOG_BASE, "kit": CATALOG_KIT}
 collection_for = {"base": base_col, "kit": kit_col}
 
+TOTAL_ASSET_COUNT = len(ASSETS) + 1  # +1 for the Bean rigged/Collection asset
+
 for i, spec in enumerate(ASSETS):
     obj = spec["make"]()
     obj.name = spec["name"]
@@ -1893,10 +2198,12 @@ for i, spec in enumerate(ASSETS):
     make_asset(obj, catalog_for[spec["category"]], spec["description"], spec["tags"])
 
     thumb_path = os.path.join(THUMB_DIR, f"{spec['name'].replace(' ', '_')}.png")
-    render_thumbnail(obj, thumb_path, preview_color(i, len(ASSETS)))
+    render_thumbnail(obj, thumb_path, preview_color(i, TOTAL_ASSET_COUNT))
     set_custom_preview(obj, thumb_path)
 
     print(f"Built asset: {spec['name']} ({spec['category']})")
+
+build_bean_asset(rigged_col, len(ASSETS), TOTAL_ASSET_COUNT)
 
 bpy.data.materials.remove(preview_mat)
 
@@ -1914,6 +2221,7 @@ VERSION 1
 
 {CATALOG_BASE}:Primitives/Base:Base
 {CATALOG_KIT}:Primitives/Hard Surface Kit:Hard-Surface-Kit
+{CATALOG_RIGGED}:Primitives/Rigged:Rigged
 """
 
 with open(CATS_PATH, "w") as f:
