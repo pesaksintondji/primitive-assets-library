@@ -13,3 +13,6 @@ assets/primitives_thumbnails/.last_modified
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Python bytecode
+__pycache__/

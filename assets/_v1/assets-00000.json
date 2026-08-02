@@ -3,30 +3,6 @@
   "file_count": 1,
   "assets": [
     {
-      "name": "Cube",
-      "id_type": "COLLECTION",
-      "files": [
-        "primitives.blend"
-      ],
-      "bl_versions": {
-        "min": "5.2"
-      },
-      "thumbnail": {
-        "url": "primitives_thumbnails/Collection/cube.webp",
-        "hash": "SHA256:1fdf8746183bb396a6dbdbda6e0514f4b33ce1e14d42f08f3f011e917e3723d6"
-      },
-      "meta": {
-        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
-        "tags": [
-          "cube",
-          "box",
-          "primitive",
-          "parametric"
-        ],
-        "description": "Parametric cube \u2014 Size/Division/pivot are live modifier inputs with viewport drag gizmos, not a fixed mesh. The small arrows show which way each Division ring increases."
-      }
-    },
-    {
       "name": "Cone",
       "id_type": "OBJECT",
       "files": [
@@ -37,27 +13,40 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cone.webp",
-        "hash": "SHA256:6abd91d1e39576254b7a533f42f955f68a91b5e00a4d29eba6312e7b879279c2"
+        "hash": "SHA256:d10ad67fa69553c7ce8677c9f99e47b1afba406c9b3abf241edc131939207d35"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "cone",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Cone, base radius 1m, height 2m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric cone \u2014 Radius Top/Bottom, Depth, Vertices are live modifier inputs with viewport drag gizmos."
+      }
+    },
+    {
+      "name": "Cube",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/cube.webp",
+        "hash": "SHA256:1fdf8746183bb396a6dbdbda6e0514f4b33ce1e14d42f08f3f011e917e3723d6"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "cube",
+          "box",
+          "primitive",
+          "parametric"
+        ],
+        "description": "Parametric cube \u2014 Size/Division/pivot are live modifier inputs with viewport drag gizmos, not a fixed mesh."
       }
     },
     {
@@ -71,27 +60,16 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cylinder.webp",
-        "hash": "SHA256:5c6b5a4f25fd1735dcf9e329b5ca139b4cf500b2910b1ccc7e98695e42fb92f5"
+        "hash": "SHA256:65cebffa308bb52312eb83ae8ce85e8958a22fe6ccf5dcaf73b5cee6d489e053"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "cylinder",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Cylinder, radius 1m, height 2m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric cylinder \u2014 Radius/Depth/Vertices are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -177,28 +155,17 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/ico-sphere.webp",
-        "hash": "SHA256:a7cc5923b7c67de857a5451c8b919cf051120c3c4d2856198bef1c41a736ded4"
+        "hash": "SHA256:e267e054ab964db1fafa7f7887aee94b1cd5676bb46adf8ca651f156987adad2"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "sphere",
           "ico",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Icosphere, radius 1m, 3 subdivisions.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              1.9999998807907104,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric icosphere \u2014 Radius/Subdivisions are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -212,28 +179,17 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/plane.webp",
-        "hash": "SHA256:75e3a01c1956f1483464ce0d50ec8edba4a11185ad779d32011345eb5b027f34"
+        "hash": "SHA256:9ed8ce26bd31f2c9a5635ee85f5216b273eec815bc50e59d17616c2e0c94f131"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "plane",
           "grid",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Flat 2m plane.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              0.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric plane/grid \u2014 Size X/Y and Division X/Y are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -318,28 +274,17 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/sphere.webp",
-        "hash": "SHA256:1078ab4860c91c56ed3a08d9d32965974814213622d3bc432bf05eb5dae4e07f"
+        "hash": "SHA256:c019891c4524781710651be6a0c9af8854be1818943430afefd2ae7385b35915"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "sphere",
           "ball",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "UV sphere, radius 1m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              1.9999988079071045,
-              1.9999992847442627,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric UV sphere \u2014 Radius/Segments/Rings are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -389,28 +334,17 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/torus.webp",
-        "hash": "SHA256:fa44561ab8daa25153248ae43aa3f3e71a010958cb1445aa96d68871d29c1d82"
+        "hash": "SHA256:3d81035dcad1f9aea161cc5fe325fa82b419d7a5f1467fd0a244535e3b5db729"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
         "tags": [
           "torus",
           "donut",
-          "primitive"
+          "primitive",
+          "parametric"
         ],
-        "description": "Torus, major radius 1m, minor radius 0.35m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.700000047683716,
-              2.700000047683716,
-              0.699999988079071
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric torus \u2014 Major/Minor Radius and Segments are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -490,8 +424,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 700113,
-      "hash": "SHA256:5762316f38660d79b76d9dfab6693fa44f1b5fd6c900d373626efd192a3d2022",
+      "size_in_bytes": 684272,
+      "hash": "SHA256:94b4b4c233f3869faf8fbc4122272c910ca6a702bac6a9afebbe44a91e55bbf8",
       "blender_version": "5.2.44"
     }
   ]

@@ -396,55 +396,389 @@ def build_cube_gn_group(name="[PrimLib] Cube"):
     return ng
 
 
-def build_cube_gn(name="Cube"):
-    """Object with an empty base mesh + the parametric Cube GN modifier."""
+def make_gn_object(name, node_group):
+    """Object with an empty base mesh + a NODES modifier running node_group,
+    with the Material input initialized (see build_cube_gn's comment above —
+    it does not inherit the interface default on its own).
+    """
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(name, mesh)
-    mod = obj.modifiers.new("Modern Cube", "NODES")
-    mod.node_group = build_cube_gn_group()
-
-    # The modifier's own stored input value does NOT inherit the interface's
-    # default_value automatically for Material sockets — set it explicitly,
-    # otherwise it ships as None (invisible/fallback-grey in the viewport).
+    mod = obj.modifiers.new(f"Modern {name}", "NODES")
+    mod.node_group = node_group
     mat_item = next(
-        it for it in mod.node_group.interface.items_tree
+        it for it in node_group.interface.items_tree
         if it.item_type == "SOCKET" and it.socket_type == "NodeSocketMaterial"
     )
     getattr(mod.properties.inputs, mat_item.identifier).value = clay
-
     return obj
 
 
-def add_division_arrows(cube_obj, collection):
-    """3 child Empty (Single Arrow) objects marking which way each Division
-    dial increases its value. Real Empties, not GN geometry: never show up in
-    renders, but — unlike the mesh-cone version — stay fixed at the default
-    Size/Division layout if the shape is resized (a plain Empty's transform
-    isn't driven by the modifier). Placed to match the *default* Size=(2,2,2),
-    Division=(0,0,0), Corner Ratio=(0,0,0) gizmo positions.
-    """
-    arrows = []
-    for i, axis in enumerate(("X", "Y", "Z")):
-        ref_axis = (i + 1) % 3
-        tangent_axis = (i + 2) % 3
+# ---------------------------------------------------------------------------
+# Shared node-group building blocks for the remaining parametric primitives
+# ---------------------------------------------------------------------------
 
-        pos = mathutils.Vector((0.0, 0.0, 0.0))
-        pos[i] = 1.0 + 0.18
-        pos[ref_axis] = 0.4
 
-        tangent_vec = mathutils.Vector((0.0, 0.0, 0.0))
-        tangent_vec[tangent_axis] = 1.0
+def add_common_interface(iface, smooth_default=False):
+    """Smooth / Smooth Angle / Material — the tail every primitive shares."""
+    smooth_in = iface.new_socket(name="Smooth", in_out="INPUT", socket_type="NodeSocketBool")
+    smooth_in.default_value = smooth_default
+    angle_in = iface.new_socket(name="Smooth Angle", in_out="INPUT", socket_type="NodeSocketFloat")
+    angle_in.subtype = "ANGLE"
+    angle_in.default_value = math.radians(30)
+    mat_in = iface.new_socket(name="Material", in_out="INPUT", socket_type="NodeSocketMaterial")
+    mat_in.default_value = clay
 
-        empty = bpy.data.objects.new(f"Division {axis} Arrow", None)
-        empty.empty_display_type = "SINGLE_ARROW"
-        empty.empty_display_size = 0.3
-        empty.location = pos
-        empty.rotation_mode = "QUATERNION"
-        empty.rotation_quaternion = mathutils.Vector((0.0, 0.0, 1.0)).rotation_difference(tangent_vec)
-        empty.parent = cube_obj
-        collection.objects.link(empty)
-        arrows.append(empty)
-    return arrows
+
+def add_smooth_material_tail(ng, group_in, group_out, mesh_socket, sba):
+    """mesh_socket -> [Smooth by Angle switch] -> Set Material -> Group Output."""
+    sba_node = ng.nodes.new("GeometryNodeGroup")
+    sba_node.node_tree = sba
+    ng.links.new(mesh_socket, sba_node.inputs[0])
+    ng.links.new(group_in.outputs["Smooth Angle"], sba_node.inputs["Angle"])
+
+    switch_node = ng.nodes.new("GeometryNodeSwitch")
+    switch_node.input_type = "GEOMETRY"
+    ng.links.new(group_in.outputs["Smooth"], switch_node.inputs["Switch"])
+    ng.links.new(mesh_socket, switch_node.inputs[False])
+    ng.links.new(sba_node.outputs[0], switch_node.inputs[True])
+
+    set_mat_node = ng.nodes.new("GeometryNodeSetMaterial")
+    ng.links.new(switch_node.outputs[0], set_mat_node.inputs["Geometry"])
+    ng.links.new(group_in.outputs["Material"], set_mat_node.inputs["Material"])
+    ng.links.new(set_mat_node.outputs["Geometry"], group_out.inputs["Geometry"])
+
+
+def const_vec(ng, xyz):
+    n = ng.nodes.new("FunctionNodeInputVector")
+    n.vector = list(xyz)
+    return n.outputs["Vector"]
+
+
+def combine_point(ng, x=None, y=None, z=None):
+    """A Vector socket built from up to 3 (optional) float sockets."""
+    c = ng.nodes.new("ShaderNodeCombineXYZ")
+    if x is not None:
+        ng.links.new(x, c.inputs["X"])
+    if y is not None:
+        ng.links.new(y, c.inputs["Y"])
+    if z is not None:
+        ng.links.new(z, c.inputs["Z"])
+    return c.outputs["Vector"]
+
+
+def negate(ng, socket):
+    m = ng.nodes.new("ShaderNodeMath")
+    m.operation = "MULTIPLY"
+    m.inputs[1].default_value = -1.0
+    ng.links.new(socket, m.inputs[0])
+    return m.outputs["Value"]
+
+
+def half(ng, socket):
+    m = ng.nodes.new("ShaderNodeMath")
+    m.operation = "MULTIPLY"
+    m.inputs[1].default_value = 0.5
+    ng.links.new(socket, m.inputs[0])
+    return m.outputs["Value"]
+
+
+def add_scalars(ng, a, b):
+    m = ng.nodes.new("ShaderNodeMath")
+    m.operation = "ADD"
+    ng.links.new(a, m.inputs[0])
+    ng.links.new(b, m.inputs[1])
+    return m.outputs["Value"]
+
+
+def divisions_to_vertices(ng, division_socket):
+    """Division count (0 = no cuts) -> vertex count (Blender primitive nodes
+    want vertex counts, e.g. Vertices X on Mesh Cube/Grid)."""
+    m = ng.nodes.new("ShaderNodeMath")
+    m.operation = "ADD"
+    m.inputs[1].default_value = 2.0
+    ng.links.new(division_socket, m.inputs[0])
+    return m.outputs["Value"]
+
+
+def add_linear_gizmo(ng, label, value_socket, position_socket, direction_socket, color_id):
+    g = ng.nodes.new("GeometryNodeGizmoLinear")
+    g.name = label
+    g.label = label
+    g.color_id = color_id
+    ng.links.new(value_socket, g.inputs["Value"])
+    ng.links.new(position_socket, g.inputs["Position"])
+    ng.links.new(direction_socket, g.inputs["Direction"])
+    return g
+
+
+def add_dial_gizmo(ng, label, value_socket, position_socket, up_socket, color_id, radius=0.4):
+    g = ng.nodes.new("GeometryNodeGizmoDial")
+    g.name = label
+    g.label = label
+    g.color_id = color_id
+    g.inputs["Radius"].default_value = radius
+    g.inputs["Screen Space"].default_value = True
+    ng.links.new(value_socket, g.inputs["Value"])
+    ng.links.new(position_socket, g.inputs["Position"])
+    ng.links.new(up_socket, g.inputs["Up"])
+    return g
+
+
+def build_sphere_gn_group(name="[PrimLib] Sphere"):
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    radius_in = iface.new_socket(name="Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    radius_in.default_value = 1.0
+    radius_in.min_value = 0.001
+    seg_in = iface.new_socket(name="Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    seg_in.default_value = 32
+    seg_in.min_value = 3
+    ring_in = iface.new_socket(name="Rings", in_out="INPUT", socket_type="NodeSocketInt")
+    ring_in.default_value = 16
+    ring_in.min_value = 2
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    sphere_node = ng.nodes.new("GeometryNodeMeshUVSphere")
+    ng.links.new(group_in.outputs["Segments"], sphere_node.inputs["Segments"])
+    ng.links.new(group_in.outputs["Rings"], sphere_node.inputs["Rings"])
+    ng.links.new(group_in.outputs["Radius"], sphere_node.inputs["Radius"])
+
+    add_smooth_material_tail(ng, group_in, group_out, sphere_node.outputs["Mesh"], sba)
+
+    add_linear_gizmo(ng, "Radius Gizmo", group_in.outputs["Radius"],
+                      combine_point(ng, x=group_in.outputs["Radius"]), const_vec(ng, (1, 0, 0)), "X")
+    add_dial_gizmo(ng, "Segments Gizmo", group_in.outputs["Segments"],
+                    combine_point(ng, y=group_in.outputs["Radius"]), const_vec(ng, (0, 1, 0)), "Y")
+    add_dial_gizmo(ng, "Rings Gizmo", group_in.outputs["Rings"],
+                    combine_point(ng, z=group_in.outputs["Radius"]), const_vec(ng, (0, 0, 1)), "Z")
+
+    return ng
+
+
+def build_icosphere_gn_group(name="[PrimLib] Ico Sphere"):
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    radius_in = iface.new_socket(name="Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    radius_in.default_value = 1.0
+    radius_in.min_value = 0.001
+    sub_in = iface.new_socket(name="Subdivisions", in_out="INPUT", socket_type="NodeSocketInt")
+    sub_in.default_value = 3
+    sub_in.min_value = 1
+    sub_in.max_value = 8
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    ico_node = ng.nodes.new("GeometryNodeMeshIcoSphere")
+    ng.links.new(group_in.outputs["Radius"], ico_node.inputs["Radius"])
+    ng.links.new(group_in.outputs["Subdivisions"], ico_node.inputs["Subdivisions"])
+
+    add_smooth_material_tail(ng, group_in, group_out, ico_node.outputs["Mesh"], sba)
+
+    add_linear_gizmo(ng, "Radius Gizmo", group_in.outputs["Radius"],
+                      combine_point(ng, x=group_in.outputs["Radius"]), const_vec(ng, (1, 0, 0)), "X")
+    add_dial_gizmo(ng, "Subdivisions Gizmo", group_in.outputs["Subdivisions"],
+                    combine_point(ng, z=group_in.outputs["Radius"]), const_vec(ng, (0, 0, 1)), "Z")
+
+    return ng
+
+
+def build_cylinder_gn_group(name="[PrimLib] Cylinder"):
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    radius_in = iface.new_socket(name="Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    radius_in.default_value = 1.0
+    radius_in.min_value = 0.001
+    depth_in = iface.new_socket(name="Depth", in_out="INPUT", socket_type="NodeSocketFloat")
+    depth_in.default_value = 2.0
+    depth_in.min_value = 0.001
+    vert_in = iface.new_socket(name="Vertices", in_out="INPUT", socket_type="NodeSocketInt")
+    vert_in.default_value = 32
+    vert_in.min_value = 3
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    cyl_node = ng.nodes.new("GeometryNodeMeshCylinder")
+    ng.links.new(group_in.outputs["Vertices"], cyl_node.inputs["Vertices"])
+    ng.links.new(group_in.outputs["Radius"], cyl_node.inputs["Radius"])
+    ng.links.new(group_in.outputs["Depth"], cyl_node.inputs["Depth"])
+
+    add_smooth_material_tail(ng, group_in, group_out, cyl_node.outputs["Mesh"], sba)
+
+    half_depth = half(ng, group_in.outputs["Depth"])
+    add_linear_gizmo(ng, "Radius Gizmo", group_in.outputs["Radius"],
+                      combine_point(ng, x=group_in.outputs["Radius"]), const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Depth Gizmo", group_in.outputs["Depth"],
+                      combine_point(ng, z=half_depth), const_vec(ng, (0, 0, 1)), "Z")
+    add_dial_gizmo(ng, "Vertices Gizmo",
+                    group_in.outputs["Vertices"],
+                    combine_point(ng, x=group_in.outputs["Radius"], z=half_depth),
+                    const_vec(ng, (0, 0, 1)), "Y")
+
+    return ng
+
+
+def build_cone_gn_group(name="[PrimLib] Cone"):
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    rbot_in = iface.new_socket(name="Radius Bottom", in_out="INPUT", socket_type="NodeSocketFloat")
+    rbot_in.default_value = 1.0
+    rbot_in.min_value = 0.0
+    rtop_in = iface.new_socket(name="Radius Top", in_out="INPUT", socket_type="NodeSocketFloat")
+    rtop_in.default_value = 0.0
+    rtop_in.min_value = 0.0
+    depth_in = iface.new_socket(name="Depth", in_out="INPUT", socket_type="NodeSocketFloat")
+    depth_in.default_value = 2.0
+    depth_in.min_value = 0.001
+    vert_in = iface.new_socket(name="Vertices", in_out="INPUT", socket_type="NodeSocketInt")
+    vert_in.default_value = 32
+    vert_in.min_value = 3
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    cone_node = ng.nodes.new("GeometryNodeMeshCone")
+    ng.links.new(group_in.outputs["Vertices"], cone_node.inputs["Vertices"])
+    ng.links.new(group_in.outputs["Radius Top"], cone_node.inputs["Radius Top"])
+    ng.links.new(group_in.outputs["Radius Bottom"], cone_node.inputs["Radius Bottom"])
+    ng.links.new(group_in.outputs["Depth"], cone_node.inputs["Depth"])
+
+    add_smooth_material_tail(ng, group_in, group_out, cone_node.outputs["Mesh"], sba)
+
+    half_depth = half(ng, group_in.outputs["Depth"])
+    neg_half_depth = negate(ng, half_depth)
+    add_linear_gizmo(ng, "Radius Bottom Gizmo", group_in.outputs["Radius Bottom"],
+                      combine_point(ng, x=group_in.outputs["Radius Bottom"], z=neg_half_depth),
+                      const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Depth Gizmo", group_in.outputs["Depth"],
+                      combine_point(ng, z=half_depth), const_vec(ng, (0, 0, 1)), "Z")
+    add_dial_gizmo(ng, "Vertices Gizmo",
+                    group_in.outputs["Vertices"],
+                    combine_point(ng, x=group_in.outputs["Radius Bottom"], z=neg_half_depth),
+                    const_vec(ng, (0, 0, 1)), "Y")
+
+    return ng
+
+
+def build_torus_gn_group(name="[PrimLib] Torus"):
+    """No native Torus primitive in Geometry Nodes — swept from two circles
+    (the classic path-circle + rotated-profile-circle recipe)."""
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    major_in = iface.new_socket(name="Major Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    major_in.default_value = 1.0
+    major_in.min_value = 0.001
+    minor_in = iface.new_socket(name="Minor Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    minor_in.default_value = 0.35
+    minor_in.min_value = 0.001
+    majseg_in = iface.new_socket(name="Major Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    majseg_in.default_value = 32
+    majseg_in.min_value = 3
+    minseg_in = iface.new_socket(name="Minor Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    minseg_in.default_value = 16
+    minseg_in.min_value = 3
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    path_circle = ng.nodes.new("GeometryNodeCurvePrimitiveCircle")
+    path_circle.mode = "RADIUS"
+    ng.links.new(group_in.outputs["Major Radius"], path_circle.inputs["Radius"])
+    ng.links.new(group_in.outputs["Major Segments"], path_circle.inputs["Resolution"])
+
+    profile_circle = ng.nodes.new("GeometryNodeCurvePrimitiveCircle")
+    profile_circle.mode = "RADIUS"
+    ng.links.new(group_in.outputs["Minor Radius"], profile_circle.inputs["Radius"])
+    ng.links.new(group_in.outputs["Minor Segments"], profile_circle.inputs["Resolution"])
+
+    curve_to_mesh = ng.nodes.new("GeometryNodeCurveToMesh")
+    curve_to_mesh.inputs["Fill Caps"].default_value = False
+    ng.links.new(path_circle.outputs["Curve"], curve_to_mesh.inputs["Curve"])
+    ng.links.new(profile_circle.outputs["Curve"], curve_to_mesh.inputs["Profile Curve"])
+
+    add_smooth_material_tail(ng, group_in, group_out, curve_to_mesh.outputs["Mesh"], sba)
+
+    outer_radius = add_scalars(ng, group_in.outputs["Major Radius"], group_in.outputs["Minor Radius"])
+    add_linear_gizmo(ng, "Major Radius Gizmo", group_in.outputs["Major Radius"],
+                      combine_point(ng, x=outer_radius), const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Minor Radius Gizmo", group_in.outputs["Minor Radius"],
+                      combine_point(ng, x=group_in.outputs["Major Radius"], z=group_in.outputs["Minor Radius"]),
+                      const_vec(ng, (0, 0, 1)), "Z")
+    add_dial_gizmo(ng, "Major Segments Gizmo", group_in.outputs["Major Segments"],
+                    combine_point(ng, y=group_in.outputs["Major Radius"]), const_vec(ng, (0, 1, 0)), "Y")
+    add_dial_gizmo(ng, "Minor Segments Gizmo", group_in.outputs["Minor Segments"],
+                    combine_point(ng, x=group_in.outputs["Major Radius"], z=group_in.outputs["Minor Radius"]),
+                    const_vec(ng, (0, 1, 0)), "Y", radius=0.25)
+
+    return ng
+
+
+def build_plane_gn_group(name="[PrimLib] Plane"):
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+    sx_in = iface.new_socket(name="Size X", in_out="INPUT", socket_type="NodeSocketFloat")
+    sx_in.default_value = 2.0
+    sx_in.min_value = 0.001
+    sy_in = iface.new_socket(name="Size Y", in_out="INPUT", socket_type="NodeSocketFloat")
+    sy_in.default_value = 2.0
+    sy_in.min_value = 0.001
+    dx_in = iface.new_socket(name="Division X", in_out="INPUT", socket_type="NodeSocketInt")
+    dx_in.default_value = 0
+    dx_in.min_value = 0
+    dy_in = iface.new_socket(name="Division Y", in_out="INPUT", socket_type="NodeSocketInt")
+    dy_in.default_value = 0
+    dy_in.min_value = 0
+    add_common_interface(iface, smooth_default=False)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    grid_node = ng.nodes.new("GeometryNodeMeshGrid")
+    ng.links.new(group_in.outputs["Size X"], grid_node.inputs["Size X"])
+    ng.links.new(group_in.outputs["Size Y"], grid_node.inputs["Size Y"])
+    ng.links.new(divisions_to_vertices(ng, group_in.outputs["Division X"]), grid_node.inputs["Vertices X"])
+    ng.links.new(divisions_to_vertices(ng, group_in.outputs["Division Y"]), grid_node.inputs["Vertices Y"])
+
+    add_smooth_material_tail(ng, group_in, group_out, grid_node.outputs["Mesh"], sba)
+
+    half_x = half(ng, group_in.outputs["Size X"])
+    half_y = half(ng, group_in.outputs["Size Y"])
+    add_linear_gizmo(ng, "Size X Gizmo", group_in.outputs["Size X"],
+                      combine_point(ng, x=half_x), const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Size Y Gizmo", group_in.outputs["Size Y"],
+                      combine_point(ng, y=half_y), const_vec(ng, (0, 1, 0)), "Y")
+    add_dial_gizmo(ng, "Division X Gizmo", group_in.outputs["Division X"],
+                    combine_point(ng, x=half_x), const_vec(ng, (0, 0, 1)), "X")
+    add_dial_gizmo(ng, "Division Y Gizmo", group_in.outputs["Division Y"],
+                    combine_point(ng, y=half_y), const_vec(ng, (0, 0, 1)), "Y")
+
+    return ng
 
 
 # ---------------------------------------------------------------------------
@@ -617,51 +951,63 @@ def set_custom_preview(obj, filepath):
 # ---------------------------------------------------------------------------
 
 ASSETS = [
-    # -- Base primitives ----------------------------------------------------
-    # Cube is registered separately below as a Collection asset (object +
-    # its 3 direction-arrow Empties) — see register_cube_asset().
+    # -- Base primitives (all parametric: Geometry Nodes modifier + native
+    # viewport gizmos, no fixed mesh) -----------------------------------------
+    dict(
+        name="Cube", category="base",
+        make=lambda: make_gn_object("Cube", build_cube_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric cube — Size/Division/pivot are live modifier "
+                    "inputs with viewport drag gizmos, not a fixed mesh.",
+        tags=["cube", "box", "primitive", "parametric"],
+    ),
     dict(
         name="Sphere", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_uv_sphere_add(radius=1, segments=32, ring_count=16)),
-        shading="auto", bevel=None,
-        description="UV sphere, radius 1m.",
-        tags=["sphere", "ball", "primitive"],
+        make=lambda: make_gn_object("Sphere", build_sphere_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric UV sphere — Radius/Segments/Rings are live "
+                    "modifier inputs with viewport drag gizmos.",
+        tags=["sphere", "ball", "primitive", "parametric"],
     ),
     dict(
         name="Ico Sphere", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_ico_sphere_add(radius=1, subdivisions=3)),
-        shading="auto", bevel=None,
-        description="Icosphere, radius 1m, 3 subdivisions.",
-        tags=["sphere", "ico", "primitive"],
+        make=lambda: make_gn_object("Ico Sphere", build_icosphere_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric icosphere — Radius/Subdivisions are live "
+                    "modifier inputs with viewport drag gizmos.",
+        tags=["sphere", "ico", "primitive", "parametric"],
     ),
     dict(
         name="Cylinder", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=2, vertices=32)),
-        shading="auto", bevel=None,
-        description="Cylinder, radius 1m, height 2m.",
-        tags=["cylinder", "primitive"],
+        make=lambda: make_gn_object("Cylinder", build_cylinder_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric cylinder — Radius/Depth/Vertices are live "
+                    "modifier inputs with viewport drag gizmos.",
+        tags=["cylinder", "primitive", "parametric"],
     ),
     dict(
         name="Cone", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_cone_add(radius1=1, radius2=0, depth=2, vertices=32)),
-        shading="auto", bevel=None,
-        description="Cone, base radius 1m, height 2m.",
-        tags=["cone", "primitive"],
+        make=lambda: make_gn_object("Cone", build_cone_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric cone — Radius Top/Bottom, Depth, Vertices are "
+                    "live modifier inputs with viewport drag gizmos.",
+        tags=["cone", "primitive", "parametric"],
     ),
     dict(
         name="Torus", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_torus_add(
-            major_radius=1, minor_radius=0.35, major_segments=32, minor_segments=16)),
-        shading="auto", bevel=None,
-        description="Torus, major radius 1m, minor radius 0.35m.",
-        tags=["torus", "donut", "primitive"],
+        make=lambda: make_gn_object("Torus", build_torus_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric torus — Major/Minor Radius and Segments are "
+                    "live modifier inputs with viewport drag gizmos.",
+        tags=["torus", "donut", "primitive", "parametric"],
     ),
     dict(
         name="Plane", category="base",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_plane_add(size=2)),
-        shading="flat", bevel=None,
-        description="Flat 2m plane.",
-        tags=["plane", "grid", "primitive"],
+        make=lambda: make_gn_object("Plane", build_plane_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric plane/grid — Size X/Y and Division X/Y are "
+                    "live modifier inputs with viewport drag gizmos.",
+        tags=["plane", "grid", "primitive", "parametric"],
     ),
     # -- Hard-surface kit -----------------------------------------------------
     dict(
@@ -735,38 +1081,7 @@ def _make_pyramid():
 catalog_for = {"base": CATALOG_BASE, "kit": CATALOG_KIT}
 collection_for = {"base": base_col, "kit": kit_col}
 
-TOTAL_ASSETS = len(ASSETS) + 1  # +1 for the Cube collection asset
-
-
-def register_cube_asset():
-    """Cube ships as a Collection asset (object + 3 direction-arrow Empties),
-    not a bare Object asset, so the Empties travel along on drag-and-drop.
-    """
-    cube_col = bpy.data.collections.new("Cube")
-    base_col.children.link(cube_col)
-
-    obj = build_cube_gn()
-    cube_col.objects.link(obj)
-    add_division_arrows(obj, cube_col)
-
-    cube_col.asset_mark()
-    ad = cube_col.asset_data
-    ad.catalog_id = CATALOG_BASE
-    ad.description = ("Parametric cube — Size/Division/pivot are live modifier "
-                       "inputs with viewport drag gizmos, not a fixed mesh. "
-                       "The small arrows show which way each Division ring increases.")
-    for t in ["cube", "box", "primitive", "parametric"]:
-        ad.tags.new(t)
-
-    thumb_path = os.path.join(THUMB_DIR, "Cube.png")
-    render_thumbnail(obj, thumb_path, preview_color(0, TOTAL_ASSETS))
-    set_custom_preview(cube_col, thumb_path)
-    print("Built asset: Cube (base, collection)")
-
-
-register_cube_asset()
-
-for i, spec in enumerate(ASSETS, start=1):
+for i, spec in enumerate(ASSETS):
     obj = spec["make"]()
     obj.name = spec["name"]
     obj.data.name = spec["name"]
@@ -780,7 +1095,7 @@ for i, spec in enumerate(ASSETS, start=1):
     make_asset(obj, catalog_for[spec["category"]], spec["description"], spec["tags"])
 
     thumb_path = os.path.join(THUMB_DIR, f"{spec['name'].replace(' ', '_')}.png")
-    render_thumbnail(obj, thumb_path, preview_color(i, TOTAL_ASSETS))
+    render_thumbnail(obj, thumb_path, preview_color(i, len(ASSETS)))
     set_custom_preview(obj, thumb_path)
 
     print(f"Built asset: {spec['name']} ({spec['category']})")
