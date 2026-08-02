@@ -10,13 +10,15 @@ thumbnailed.
 
 ## What's inside
 
-One file, `assets/primitives.blend`, containing 14 assets in two catalogs:
+One file, `assets/primitives.blend`, containing 18 assets in two catalogs, every
+single one parametric:
 
-**Base** — the classic primitives, all parametric (see below)
-- Cube, Sphere, Ico Sphere, Cylinder, Cone, Torus, Plane
+**Base** — the classic primitives, plus two more from the *Modern Primitives* set
+- Cube, Sphere, Ico Sphere, Cylinder, Cone, Torus, Plane, Quad Sphere, Capsule
 
-**Hard Surface Kit** — kitbash-ready pieces, most of them parametric too
-- Rounded Cube, Tube (hollow cylinder), Dome (half-sphere), Wedge, Stairs, Pyramid, Hex Prism
+**Hard Surface Kit** — kitbash-ready pieces, including two mechanical parts
+- Rounded Cube, Tube (hollow cylinder), Dome (half-sphere), Wedge, Stairs,
+  Pyramid, Hex Prism, Gear, Spring
 
 Every asset has a rendered preview thumbnail (shaded + wireframe overlay, so topology
 reads at a glance), a description and search tags, and lives in its catalog so it
@@ -24,7 +26,7 @@ shows up correctly in the Asset Browser's catalog tree.
 
 ### Parametric primitives
 
-11 of the 14 shapes ship as plain **Object assets** — no Collection wrapper, no
+All 18 shapes ship as plain **Object assets** — no Collection wrapper, no
 child Empties, nothing extra to bring along when you drag one into a scene. Each
 one is an empty-mesh object driving a Geometry Nodes modifier (built by a
 `build_<shape>_gn_group()` function in `scripts/build_library.py`) that exposes
@@ -42,29 +44,57 @@ its dimensions as native viewport gizmos:
   by sweeping a profile circle along a path circle with `Curve to Mesh` — there's
   no native Torus primitive node in Geometry Nodes)
 - **Plane** — Size X/Y, Division X/Y
+- **Quad Sphere** — Radius, Subdivisions (a subdivided cube with every vertex
+  pushed out to Radius — even quad topology, no poles, unlike the UV Sphere)
+- **Capsule** — Radius, Height, Segments (a cylinder capped with two
+  hemispheres, built the same sphere-minus-cutter way as the Dome, then welded
+  at the seams with Merge by Distance)
 
 **Hard Surface Kit**
 - **Rounded Cube** — Size X/Y/Z, Bevel Width, Bevel Segments (a `Mesh Cube` +
   the `Mesh Bevel` node, replacing the old fixed Bevel modifier)
+- **Tube** — Outer/Inner Radius, Height, Div Circle (outer cylinder minus a
+  taller inner cylinder via Boolean `DIFFERENCE`)
 - **Dome** — Radius, Segments, Rings (a UV Sphere cut flat by a Boolean
   `DIFFERENCE` against a cutter cube — see note below)
 - **Wedge** — Width, Depth, Height, Bevel Width, Bevel Segments (swept from a
   triangular profile curve along a straight path — no native wedge/ramp
   primitive either)
+- **Stairs** — Width, Depth, Height, Steps (built with a **Repeat Zone**: each
+  iteration joins one more step-box, so the step count is a genuine live input
+  instead of a fixed mesh)
+- **Pyramid** — Base Size, Height (a 4-vertex Mesh Cone rotated 45° so the base
+  sits square to the X/Y axes instead of diamond-oriented)
 - **Hex Prism** — Radius, Depth, Vertices (defaults to 6 — set it to anything
   to get any N-gon prism), Bevel Width, Bevel Segments
+- **Gear** — Num Blades, Inner/Outer Radius, Height (a circle whose vertices
+  alternate between the two radii — a cheap zigzag gear silhouette, not a
+  fillet-accurate tooth profile)
+- **Spring** — Bottom/Top Radius, Height, Rotations, Ring Radius, Div Circle,
+  Div Ring (there's no native spiral curve primitive, so the helix path is
+  built point-by-point with a Mesh Line + index-driven trig math, then swept
+  with a small profile circle)
 
-Tube, Stairs and Pyramid are still fixed meshes (not converted in this pass).
-
-Every parametric shape also has Smooth / Smooth Angle (via Blender's bundled
-*Smooth by Angle* node group) and a swappable Material input.
+Every shape also has Smooth / Smooth Angle (via Blender's bundled *Smooth by
+Angle* node group) and a swappable Material input. Quad Sphere, Capsule, Gear
+and Spring take their parameter naming after the corresponding shapes in the
+*Modern Primitives* add-on (used only as a reference for what to expose, not
+its node graphs — these are separate from-scratch implementations, and skip
+its "snapping" increments feature).
 
 > **Boolean node gotcha:** this Blender build's `Mesh Boolean` node silently
 > returns its second input **unmodified** for `INTERSECT`/`UNION` — a solver
 > bug/limitation confirmed by testing plain cube-vs-cube — while `DIFFERENCE`
-> (Mesh 1 − Mesh 2) works correctly and cleanly caps the cut. The Dome uses
-> `DIFFERENCE` (sphere minus a cutter covering the unwanted lower half) instead
-> of the more obvious `INTERSECT`, precisely to route around this.
+> (Mesh 1 − Mesh 2) works correctly and cleanly caps the cut. Dome, Capsule and
+> Tube all use `DIFFERENCE` instead of the more obvious `INTERSECT`/`UNION`,
+> precisely to route around this.
+>
+> **Switch node gotcha:** `GeometryNodeSwitch`'s "False"/"True" value sockets
+> must be indexed by the strings `"False"`/`"True"` — indexing with the Python
+> booleans `False`/`True` silently aliases to positional index `0`/`1` (since
+> `bool` is a subclass of `int`), which lands on the `Switch` toggle input
+> itself instead. This broke the Smooth toggle on every shape in the library
+> until it was caught and fixed.
 
 The gizmos are plain node-group *data* (`GeometryNodeGizmoLinear` /
 `GeometryNodeGizmoDial` / `GeometryNodeGizmoTransform`, color-coded per axis), the

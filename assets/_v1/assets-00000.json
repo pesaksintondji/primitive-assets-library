@@ -1,7 +1,31 @@
 {
-  "asset_count": 14,
+  "asset_count": 18,
   "file_count": 1,
   "assets": [
+    {
+      "name": "Capsule",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/capsule.webp",
+        "hash": "SHA256:acc9ba1fb7b96926472f2adc5f37efe8b478771f64a218003698eacd56789c14"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "capsule",
+          "pill",
+          "primitive",
+          "parametric"
+        ],
+        "description": "Parametric capsule \u2014 Radius/Height/Segments are live modifier inputs with viewport drag gizmos."
+      }
+    },
     {
       "name": "Cone",
       "id_type": "OBJECT",
@@ -36,7 +60,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/cube.webp",
-        "hash": "SHA256:1fdf8746183bb396a6dbdbda6e0514f4b33ce1e14d42f08f3f011e917e3723d6"
+        "hash": "SHA256:8d6d08e7da2a291c04adc51fb28eb186975a07232ea3289cf456266165aac11c"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -83,7 +107,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/dome.webp",
-        "hash": "SHA256:c9997bd6acde5960f68c1c5f6b3b7f502629041a98f746d827195298e6a749c8"
+        "hash": "SHA256:fbe071d9827125df2adab2fbeb9f2b0e282a11b9415a9458357c3a973376c468"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -98,6 +122,32 @@
       }
     },
     {
+      "name": "Gear",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/gear.webp",
+        "hash": "SHA256:e10c374f6a1dd6c9f077562df73380d63a2f4c9975adca04e1537aa91d7aedb5"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "gear",
+          "cog",
+          "mechanical",
+          "kit",
+          "hard-surface",
+          "parametric"
+        ],
+        "description": "Parametric gear/cog \u2014 Num Blades, Inner/Outer Radius and Height are live modifier inputs with viewport drag gizmos."
+      }
+    },
+    {
       "name": "Hex Prism",
       "id_type": "OBJECT",
       "files": [
@@ -108,7 +158,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/hex-prism.webp",
-        "hash": "SHA256:8b32e261a1b4620a78deb2aee22d511098eadc050bcb4859cf1456d7dea67c1d"
+        "hash": "SHA256:a25ba715486b59ecab4d5f109696665fece7e699b217b24967eb4d9fc11cdc9b"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -157,7 +207,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/plane.webp",
-        "hash": "SHA256:9ed8ce26bd31f2c9a5635ee85f5216b273eec815bc50e59d17616c2e0c94f131"
+        "hash": "SHA256:75e3a01c1956f1483464ce0d50ec8edba4a11185ad779d32011345eb5b027f34"
       },
       "meta": {
         "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
@@ -181,28 +231,42 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/pyramid.webp",
-        "hash": "SHA256:74c8adbb2ca49c8ca09783da6da762c74f25b36328ad72dcd560479a14ec23b7"
+        "hash": "SHA256:3c7a3f5e53ab14249063443a43068db635ab30cec4adfbdbbea193c878810d53"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
         "tags": [
           "pyramid",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "Square-base pyramid, 2x2m base, 2m tall.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              1.9999998807907104,
-              1.9999998807907104,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric square pyramid \u2014 Base Size/Height are live modifier inputs with viewport drag gizmos."
+      }
+    },
+    {
+      "name": "Quad Sphere",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/quad-sphere.webp",
+        "hash": "SHA256:96888fa46c8d0415f9427cb8eb2771379e3bdbe8b5986cd0bc5300c02ff0c697"
+      },
+      "meta": {
+        "catalog_id": "6f46c395-e541-49e2-805e-6b76b228386c",
+        "tags": [
+          "sphere",
+          "quad",
+          "cube-sphere",
+          "primitive",
+          "parametric"
+        ],
+        "description": "Parametric cube-sphere \u2014 Radius/Subdivisions are live modifier inputs with viewport drag gizmos. Even quad topology, no poles, unlike a UV sphere."
       }
     },
     {
@@ -216,7 +280,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/rounded-cube.webp",
-        "hash": "SHA256:3f2caf470a6dda4795648934fb7488a47e0441c2dd8f3fe548e17ceda5e21330"
+        "hash": "SHA256:4526c4398b5bde504f4e6764d7d59a9d55d902b26e57597101721978f3ee8291"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -255,6 +319,32 @@
       }
     },
     {
+      "name": "Spring",
+      "id_type": "OBJECT",
+      "files": [
+        "primitives.blend"
+      ],
+      "bl_versions": {
+        "min": "5.2"
+      },
+      "thumbnail": {
+        "url": "primitives_thumbnails/Object/spring.webp",
+        "hash": "SHA256:5501491980e493fa7ede87bc2585e1167909f51122cdbdd442fbbefb25835e56"
+      },
+      "meta": {
+        "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
+        "tags": [
+          "spring",
+          "coil",
+          "mechanical",
+          "kit",
+          "hard-surface",
+          "parametric"
+        ],
+        "description": "Parametric coil spring \u2014 Bottom/Top Radius, Height, Rotations and Ring Radius are live modifier inputs with viewport drag gizmos."
+      }
+    },
+    {
       "name": "Stairs",
       "id_type": "OBJECT",
       "files": [
@@ -265,7 +355,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/stairs.webp",
-        "hash": "SHA256:d96cd9205870da6826e9e29e8700e831a9463432c39e88ea93a856b10f054513"
+        "hash": "SHA256:18ca3db3c2e6d45b3af4b5a9ad048c54fface98bfbcb10d7e6511e2ba61dce6e"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -273,21 +363,10 @@
           "stairs",
           "steps",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "5-step staircase block, 2m wide, 2m tall, 2m deep.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric staircase \u2014 Width/Depth/Height/Steps are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -325,7 +404,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/tube.webp",
-        "hash": "SHA256:f9b5df47e35439bee0f73eddb96756e61a5f1b721d5adafae98ffbaf16e14640"
+        "hash": "SHA256:906c44c4bf523c57224f165427524670910a64f054a227996389f9fef635361f"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -334,21 +413,10 @@
           "pipe",
           "hollow",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "Hollow cylindrical tube, outer radius 1m, wall thickness 0.35m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric hollow tube \u2014 Outer/Inner Radius, Height and Div Circle are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -362,7 +430,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/wedge.webp",
-        "hash": "SHA256:2e4f5f6311439438e21375fcf131ecc32b21baa848987774a179ceb573b6bb4d"
+        "hash": "SHA256:62728547f5a8d38dcd41e78d55ebfa4d51d94f4c75a71a767ac7a7bdbd2e08c5"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -380,8 +448,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 700594,
-      "hash": "SHA256:0d8974efc729ce6991319134d5df2bf0b5cc3c75139307a2e5ed023e5b5e72a2",
+      "size_in_bytes": 896343,
+      "hash": "SHA256:b01f0af29008015a649fc75fb9b06ed7e29c408f123932dca029d16876f16207",
       "blender_version": "5.2.44"
     }
   ]

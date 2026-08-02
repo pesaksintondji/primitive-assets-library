@@ -13,7 +13,9 @@ OUT_PATH = os.path.join(ROOT, "docs", "contact_sheet.png")
 
 ORDER = [
     "Cube", "Sphere", "Ico_Sphere", "Cylinder", "Cone", "Torus", "Plane",
+    "Quad_Sphere", "Capsule",
     "Rounded_Cube", "Tube", "Dome", "Wedge", "Stairs", "Pyramid", "Hex_Prism",
+    "Gear", "Spring",
 ]
 
 COLS = 7
