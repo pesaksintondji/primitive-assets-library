@@ -145,38 +145,6 @@ def build_tube(name="Tube", outer_r=1.0, inner_r=0.65, depth=2.0, segments=32):
     return mesh_from_bmesh(bm, name)
 
 
-def build_dome(name="Dome", radius=1.0, u=32, v=16):
-    bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=u, v_segments=v, radius=radius)
-    geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
-    bmesh.ops.bisect_plane(
-        bm, geom=geom, dist=0.0001, plane_co=(0, 0, 0), plane_no=(0, 0, 1),
-        clear_inner=True, clear_outer=False,
-    )
-    open_edges = [e for e in bm.edges if e.is_boundary]
-    bmesh.ops.edgeloop_fill(bm, edges=open_edges)
-    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
-    return mesh_from_bmesh(bm, name)
-
-
-def build_wedge(name="Wedge", width=2.0, depth=2.0, height=2.0):
-    bm = bmesh.new()
-    hw, hd = width / 2, depth / 2
-    v0 = bm.verts.new((-hw, -hd, 0))
-    v1 = bm.verts.new((hw, -hd, 0))
-    v2 = bm.verts.new((hw, hd, 0))
-    v3 = bm.verts.new((-hw, hd, 0))
-    v4 = bm.verts.new((-hw, -hd, height))
-    v5 = bm.verts.new((hw, -hd, height))
-    bm.faces.new((v0, v1, v2, v3))
-    bm.faces.new((v0, v4, v5, v1))
-    bm.faces.new((v4, v3, v2, v5))
-    bm.faces.new((v0, v3, v4))
-    bm.faces.new((v1, v5, v2))
-    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
-    return mesh_from_bmesh(bm, name)
-
-
 def build_stairs(name="Stairs", steps=5, width=2.0, total_depth=2.0, total_height=2.0):
     step_depth = total_depth / steps
     step_height = total_height / steps
@@ -781,6 +749,260 @@ def build_plane_gn_group(name="[PrimLib] Plane"):
     return ng
 
 
+def add_bevel_tail(ng, group_in, mesh_socket, bevel_width_name="Bevel Width", bevel_segments_name="Bevel Segments"):
+    """mesh_socket -> MeshBevel(all edges, Offset=Bevel Width, Segments=Bevel Segments) -> output socket."""
+    bevel_node = ng.nodes.new("GeometryNodeMeshBevel")
+    bevel_node.inputs["Selection"].default_value = True
+    ng.links.new(mesh_socket, bevel_node.inputs["Mesh"])
+    ng.links.new(group_in.outputs[bevel_width_name], bevel_node.inputs["Offset"])
+    ng.links.new(group_in.outputs[bevel_segments_name], bevel_node.inputs["Segments"])
+    return bevel_node.outputs["Mesh"]
+
+
+def build_rounded_cube_gn_group(name="[PrimLib] Rounded Cube"):
+    """Parametric hard-surface cube: Size (X/Y/Z) + a rounded Bevel Width/Segments."""
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+
+    size_in = iface.new_socket(name="Size", in_out="INPUT", socket_type="NodeSocketVector")
+    size_in.default_value = (2.0, 2.0, 2.0)
+    size_in.min_value = 0.001
+
+    bw_in = iface.new_socket(name="Bevel Width", in_out="INPUT", socket_type="NodeSocketFloat")
+    bw_in.subtype = "DISTANCE"
+    bw_in.default_value = 0.15
+    bw_in.min_value = 0.0
+
+    bs_in = iface.new_socket(name="Bevel Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    bs_in.default_value = 6
+    bs_in.min_value = 1
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    cube_node = ng.nodes.new("GeometryNodeMeshCube")
+    ng.links.new(group_in.outputs["Size"], cube_node.inputs["Size"])
+
+    beveled = add_bevel_tail(ng, group_in, cube_node.outputs["Mesh"])
+    add_smooth_material_tail(ng, group_in, group_out, beveled, sba)
+
+    sep_size = ng.nodes.new("ShaderNodeSeparateXYZ")
+    ng.links.new(group_in.outputs["Size"], sep_size.inputs["Vector"])
+    for axis in ("X", "Y", "Z"):
+        h = half(ng, sep_size.outputs[axis])
+        direction = const_vec(ng, tuple(1.0 if a == axis else 0.0 for a in ("X", "Y", "Z")))
+        add_linear_gizmo(ng, f"Size {axis} Gizmo", sep_size.outputs[axis],
+                          combine_point(ng, **{axis.lower(): h}), direction, axis)
+
+    half_x = half(ng, sep_size.outputs["X"])
+    add_linear_gizmo(ng, "Bevel Width Gizmo", group_in.outputs["Bevel Width"],
+                      combine_point(ng, x=half_x, z=half(ng, sep_size.outputs["Z"])),
+                      const_vec(ng, (0, 0, 1)), "PRIMARY")
+    add_dial_gizmo(ng, "Bevel Segments Gizmo", group_in.outputs["Bevel Segments"],
+                    combine_point(ng, x=negate(ng, half_x), z=half(ng, sep_size.outputs["Z"])),
+                    const_vec(ng, (1, 0, 0)), "PRIMARY", radius=0.25)
+
+    return ng
+
+
+def build_hex_prism_gn_group(name="[PrimLib] Hex Prism"):
+    """Parametric N-gon prism (defaults to a hexagon) with a rounded edge bevel."""
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+
+    radius_in = iface.new_socket(name="Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    radius_in.default_value = 1.0
+    radius_in.min_value = 0.001
+    depth_in = iface.new_socket(name="Depth", in_out="INPUT", socket_type="NodeSocketFloat")
+    depth_in.default_value = 2.0
+    depth_in.min_value = 0.001
+    vert_in = iface.new_socket(name="Vertices", in_out="INPUT", socket_type="NodeSocketInt")
+    vert_in.default_value = 6
+    vert_in.min_value = 3
+
+    bw_in = iface.new_socket(name="Bevel Width", in_out="INPUT", socket_type="NodeSocketFloat")
+    bw_in.subtype = "DISTANCE"
+    bw_in.default_value = 0.02
+    bw_in.min_value = 0.0
+    bs_in = iface.new_socket(name="Bevel Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    bs_in.default_value = 2
+    bs_in.min_value = 1
+    add_common_interface(iface, smooth_default=False)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    cyl_node = ng.nodes.new("GeometryNodeMeshCylinder")
+    ng.links.new(group_in.outputs["Vertices"], cyl_node.inputs["Vertices"])
+    ng.links.new(group_in.outputs["Radius"], cyl_node.inputs["Radius"])
+    ng.links.new(group_in.outputs["Depth"], cyl_node.inputs["Depth"])
+
+    beveled = add_bevel_tail(ng, group_in, cyl_node.outputs["Mesh"])
+    add_smooth_material_tail(ng, group_in, group_out, beveled, sba)
+
+    add_linear_gizmo(ng, "Radius Gizmo", group_in.outputs["Radius"],
+                      combine_point(ng, x=group_in.outputs["Radius"]), const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Depth Gizmo", half(ng, group_in.outputs["Depth"]),
+                      combine_point(ng, z=half(ng, group_in.outputs["Depth"])), const_vec(ng, (0, 0, 1)), "Z")
+    add_dial_gizmo(ng, "Vertices Gizmo", group_in.outputs["Vertices"],
+                    combine_point(ng, y=group_in.outputs["Radius"]), const_vec(ng, (0, 1, 0)), "Y")
+    add_linear_gizmo(ng, "Bevel Width Gizmo", group_in.outputs["Bevel Width"],
+                      combine_point(ng, x=negate(ng, group_in.outputs["Radius"]),
+                                    z=half(ng, group_in.outputs["Depth"])),
+                      const_vec(ng, (0, 0, 1)), "PRIMARY")
+
+    return ng
+
+
+def build_dome_gn_group(name="[PrimLib] Dome"):
+    """Half-sphere with a flat base: a UV Sphere intersected with a large cube
+    cutter whose top face sits exactly at Z=0 (no native hemisphere primitive)."""
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+
+    radius_in = iface.new_socket(name="Radius", in_out="INPUT", socket_type="NodeSocketFloat")
+    radius_in.default_value = 1.0
+    radius_in.min_value = 0.001
+    seg_in = iface.new_socket(name="Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    seg_in.default_value = 32
+    seg_in.min_value = 3
+    ring_in = iface.new_socket(name="Rings", in_out="INPUT", socket_type="NodeSocketInt")
+    ring_in.default_value = 16
+    ring_in.min_value = 2
+    add_common_interface(iface, smooth_default=True)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    sphere_node = ng.nodes.new("GeometryNodeMeshUVSphere")
+    ng.links.new(group_in.outputs["Segments"], sphere_node.inputs["Segments"])
+    ng.links.new(group_in.outputs["Rings"], sphere_node.inputs["Rings"])
+    ng.links.new(group_in.outputs["Radius"], sphere_node.inputs["Radius"])
+
+    # Cutter cube: comfortably larger than the sphere in every direction,
+    # translated down so its top face sits exactly at Z=0.
+    cutter_size = ng.nodes.new("ShaderNodeMath")
+    cutter_size.operation = "MULTIPLY"
+    cutter_size.inputs[1].default_value = 4.0
+    ng.links.new(group_in.outputs["Radius"], cutter_size.inputs[0])
+
+    cutter_node = ng.nodes.new("GeometryNodeMeshCube")
+    ng.links.new(combine_point(ng, x=cutter_size.outputs["Value"], y=cutter_size.outputs["Value"],
+                                z=cutter_size.outputs["Value"]), cutter_node.inputs["Size"])
+
+    cutter_transform = ng.nodes.new("GeometryNodeTransform")
+    ng.links.new(cutter_node.outputs["Mesh"], cutter_transform.inputs["Geometry"])
+    ng.links.new(combine_point(ng, z=negate(ng, half(ng, cutter_size.outputs["Value"]))),
+                  cutter_transform.inputs["Translation"])
+
+    # DIFFERENCE, not INTERSECT: this Blender build's Mesh Boolean node
+    # returns Mesh 2 untouched for INTERSECT/UNION (verified empirically —
+    # a real solver bug/limitation), while DIFFERENCE (Mesh 1 - Mesh 2)
+    # works correctly. Sphere minus the lower-half cutter = upper hemisphere
+    # with a clean flat cap, which is exactly the dome shape we want.
+    boolean_node = ng.nodes.new("GeometryNodeMeshBoolean")
+    boolean_node.operation = "DIFFERENCE"
+    # "Mesh 1"/"Mesh 2" can't be looked up by name here (Blender quirk with
+    # this node's multi-input socket naming) — index positionally instead.
+    ng.links.new(sphere_node.outputs["Mesh"], boolean_node.inputs[0])
+    ng.links.new(cutter_transform.outputs["Geometry"], boolean_node.inputs[1])
+
+    add_smooth_material_tail(ng, group_in, group_out, boolean_node.outputs["Mesh"], sba)
+
+    add_linear_gizmo(ng, "Radius Gizmo", group_in.outputs["Radius"],
+                      combine_point(ng, x=group_in.outputs["Radius"]), const_vec(ng, (1, 0, 0)), "X")
+    add_dial_gizmo(ng, "Segments Gizmo", group_in.outputs["Segments"],
+                    combine_point(ng, y=group_in.outputs["Radius"]), const_vec(ng, (0, 0, 1)), "Y")
+    add_dial_gizmo(ng, "Rings Gizmo", group_in.outputs["Rings"],
+                    combine_point(ng, x=negate(ng, group_in.outputs["Radius"])), const_vec(ng, (0, 0, 1)), "X",
+                    radius=0.25)
+
+    return ng
+
+
+def build_wedge_gn_group(name="[PrimLib] Wedge"):
+    """Ramp / wedge block, built by sweeping a right-triangle profile curve
+    along a straight path (no native wedge primitive). Verified empirically:
+    with the path running along X, a profile point (x, y, 0) lands at world
+    (Y=-x, Z=-y) -- so the profile points below are pre-flipped to land the
+    triangle where we want it (front face at -Depth/2 rising to +Height)."""
+    sba = ensure_smooth_by_angle_group()
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+    iface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+
+    width_in = iface.new_socket(name="Width", in_out="INPUT", socket_type="NodeSocketFloat")
+    width_in.default_value = 2.0
+    width_in.min_value = 0.001
+    depth_in = iface.new_socket(name="Depth", in_out="INPUT", socket_type="NodeSocketFloat")
+    depth_in.default_value = 2.0
+    depth_in.min_value = 0.001
+    height_in = iface.new_socket(name="Height", in_out="INPUT", socket_type="NodeSocketFloat")
+    height_in.default_value = 2.0
+    height_in.min_value = 0.001
+
+    bw_in = iface.new_socket(name="Bevel Width", in_out="INPUT", socket_type="NodeSocketFloat")
+    bw_in.subtype = "DISTANCE"
+    bw_in.default_value = 0.03
+    bw_in.min_value = 0.0
+    bs_in = iface.new_socket(name="Bevel Segments", in_out="INPUT", socket_type="NodeSocketInt")
+    bs_in.default_value = 2
+    bs_in.min_value = 1
+    add_common_interface(iface, smooth_default=False)
+
+    group_in = ng.nodes.new("NodeGroupInput")
+    group_out = ng.nodes.new("NodeGroupOutput")
+
+    half_w = half(ng, group_in.outputs["Width"])
+    half_d = half(ng, group_in.outputs["Depth"])
+    neg_half_w = negate(ng, half_w)
+
+    path = ng.nodes.new("GeometryNodeCurvePrimitiveLine")
+    path.mode = "POINTS"
+    ng.links.new(combine_point(ng, x=neg_half_w), path.inputs["Start"])
+    ng.links.new(combine_point(ng, x=half_w), path.inputs["End"])
+
+    neg_height = negate(ng, group_in.outputs["Height"])
+    profile = ng.nodes.new("GeometryNodeCurvePrimitiveQuadrilateral")
+    profile.mode = "POINTS"
+    ng.links.new(combine_point(ng, x=half_d), profile.inputs["Point 1"])
+    ng.links.new(combine_point(ng, x=half_d, y=neg_height), profile.inputs["Point 2"])
+    neg_half_d = negate(ng, half_d)
+    ng.links.new(combine_point(ng, x=neg_half_d), profile.inputs["Point 3"])
+    ng.links.new(combine_point(ng, x=neg_half_d), profile.inputs["Point 4"])
+
+    c2m = ng.nodes.new("GeometryNodeCurveToMesh")
+    c2m.inputs["Fill Caps"].default_value = True
+    ng.links.new(path.outputs["Curve"], c2m.inputs["Curve"])
+    ng.links.new(profile.outputs["Curve"], c2m.inputs["Profile Curve"])
+
+    beveled = add_bevel_tail(ng, group_in, c2m.outputs["Mesh"])
+    add_smooth_material_tail(ng, group_in, group_out, beveled, sba)
+
+    add_linear_gizmo(ng, "Width Gizmo", half_w,
+                      combine_point(ng, x=half_w), const_vec(ng, (1, 0, 0)), "X")
+    add_linear_gizmo(ng, "Depth Gizmo", half_d,
+                      combine_point(ng, y=negate(ng, half_d)), const_vec(ng, (0, 1, 0)), "Y")
+    add_linear_gizmo(ng, "Height Gizmo", group_in.outputs["Height"],
+                      combine_point(ng, y=negate(ng, half_d), z=group_in.outputs["Height"]),
+                      const_vec(ng, (0, 0, 1)), "Z")
+    add_linear_gizmo(ng, "Bevel Width Gizmo", group_in.outputs["Bevel Width"],
+                      combine_point(ng, x=negate(ng, half_w)), const_vec(ng, (0, 0, 1)), "PRIMARY")
+
+    return ng
+
+
 # ---------------------------------------------------------------------------
 # Shading / modifiers / asset metadata helpers
 # ---------------------------------------------------------------------------
@@ -1012,10 +1234,11 @@ ASSETS = [
     # -- Hard-surface kit -----------------------------------------------------
     dict(
         name="Rounded Cube", category="kit",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_cube_add(size=2)),
-        shading="auto", bevel=(0.15, 6),
-        description="2m cube with a soft rounded bevel, kitbash-ready.",
-        tags=["cube", "rounded", "kit", "hard-surface"],
+        make=lambda: make_gn_object("Rounded Cube", build_rounded_cube_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric rounded cube — Size and the Bevel Width/Segments "
+                    "are live modifier inputs with viewport drag gizmos.",
+        tags=["cube", "rounded", "kit", "hard-surface", "parametric"],
     ),
     dict(
         name="Tube", category="kit",
@@ -1026,17 +1249,20 @@ ASSETS = [
     ),
     dict(
         name="Dome", category="kit",
-        make=lambda: build_dome(),
-        shading="auto", bevel=None,
-        description="Half-sphere dome, radius 1m, flat base.",
-        tags=["dome", "half-sphere", "kit", "hard-surface"],
+        make=lambda: make_gn_object("Dome", build_dome_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric half-sphere dome, flat base — Radius/Segments/Rings "
+                    "are live modifier inputs with viewport drag gizmos.",
+        tags=["dome", "half-sphere", "kit", "hard-surface", "parametric"],
     ),
     dict(
         name="Wedge", category="kit",
-        make=lambda: build_wedge(),
-        shading="auto", bevel=(0.03, 2),
-        description="Ramp / wedge block, 2x2x2m footprint.",
-        tags=["wedge", "ramp", "kit", "hard-surface"],
+        make=lambda: make_gn_object("Wedge", build_wedge_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric ramp / wedge block — Width/Depth/Height and the "
+                    "Bevel Width/Segments are live modifier inputs with viewport "
+                    "drag gizmos.",
+        tags=["wedge", "ramp", "kit", "hard-surface", "parametric"],
     ),
     dict(
         name="Stairs", category="kit",
@@ -1054,10 +1280,12 @@ ASSETS = [
     ),
     dict(
         name="Hex Prism", category="kit",
-        make=lambda: spawn_via_op(lambda: bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=2, vertices=6)),
-        shading="auto", bevel=(0.02, 2),
-        description="Hexagonal prism, radius 1m, height 2m.",
-        tags=["hexagon", "prism", "kit", "hard-surface"],
+        make=lambda: make_gn_object("Hex Prism", build_hex_prism_gn_group()),
+        shading=None, bevel=None, gn=True,
+        description="Parametric N-gon prism (default hexagon) — Radius/Depth/"
+                    "Vertices and the Bevel Width/Segments are live modifier "
+                    "inputs with viewport drag gizmos.",
+        tags=["hexagon", "prism", "kit", "hard-surface", "parametric"],
     ),
 ]
 

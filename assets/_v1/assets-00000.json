@@ -83,7 +83,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/dome.webp",
-        "hash": "SHA256:b2ea2b10ff5973705599e7fbe603f171563a651d98bf1a79102bd6c3c0cd1f5a"
+        "hash": "SHA256:c9997bd6acde5960f68c1c5f6b3b7f502629041a98f746d827195298e6a749c8"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -91,21 +91,10 @@
           "dome",
           "half-sphere",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "Half-sphere dome, radius 1m, flat base.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              1.9999988079071045,
-              1.9999992847442627,
-              1.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric half-sphere dome, flat base \u2014 Radius/Segments/Rings are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -119,7 +108,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/hex-prism.webp",
-        "hash": "SHA256:077999a9996747ceb15fbe0249f144cdbaf2093b54116bb02319ebea560510d7"
+        "hash": "SHA256:8b32e261a1b4620a78deb2aee22d511098eadc050bcb4859cf1456d7dea67c1d"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -127,21 +116,10 @@
           "hexagon",
           "prism",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "Hexagonal prism, radius 1m, height 2m.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              1.7320507764816284,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric N-gon prism (default hexagon) \u2014 Radius/Depth/Vertices and the Bevel Width/Segments are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -238,7 +216,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/rounded-cube.webp",
-        "hash": "SHA256:99f81e14e87e0fc85a3985031565ad9f1cc281f4f5fe5fa2c2ec213ebe4a5336"
+        "hash": "SHA256:3f2caf470a6dda4795648934fb7488a47e0441c2dd8f3fe548e17ceda5e21330"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -246,21 +224,10 @@
           "cube",
           "rounded",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "2m cube with a soft rounded bevel, kitbash-ready.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric rounded cube \u2014 Size and the Bevel Width/Segments are live modifier inputs with viewport drag gizmos."
       }
     },
     {
@@ -395,7 +362,7 @@
       },
       "thumbnail": {
         "url": "primitives_thumbnails/Object/wedge.webp",
-        "hash": "SHA256:a80a473808e43e15149f97265f0eb011091c9ecbf12af14abd0d2bdf4d102616"
+        "hash": "SHA256:2e4f5f6311439438e21375fcf131ecc32b21baa848987774a179ceb573b6bb4d"
       },
       "meta": {
         "catalog_id": "7bc7ab05-58e9-42ee-821b-feea30abdfb6",
@@ -403,29 +370,18 @@
           "wedge",
           "ramp",
           "kit",
-          "hard-surface"
+          "hard-surface",
+          "parametric"
         ],
-        "description": "Ramp / wedge block, 2x2x2m footprint.",
-        "properties": [
-          {
-            "name": "dimensions",
-            "type": "IDP_ARRAY",
-            "value": [
-              2.0,
-              2.0,
-              2.0
-            ],
-            "itemtype": "IDP_FLOAT"
-          }
-        ]
+        "description": "Parametric ramp / wedge block \u2014 Width/Depth/Height and the Bevel Width/Segments are live modifier inputs with viewport drag gizmos."
       }
     }
   ],
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 684272,
-      "hash": "SHA256:94b4b4c233f3869faf8fbc4122272c910ca6a702bac6a9afebbe44a91e55bbf8",
+      "size_in_bytes": 700594,
+      "hash": "SHA256:0d8974efc729ce6991319134d5df2bf0b5cc3c75139307a2e5ed023e5b5e72a2",
       "blender_version": "5.2.44"
     }
   ]

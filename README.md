@@ -15,21 +15,22 @@ One file, `assets/primitives.blend`, containing 14 assets in two catalogs:
 **Base** — the classic primitives, all parametric (see below)
 - Cube, Sphere, Ico Sphere, Cylinder, Cone, Torus, Plane
 
-**Hard Surface Kit** — kitbash-ready pieces with a light bevel baked in
+**Hard Surface Kit** — kitbash-ready pieces, most of them parametric too
 - Rounded Cube, Tube (hollow cylinder), Dome (half-sphere), Wedge, Stairs, Pyramid, Hex Prism
 
 Every asset has a rendered preview thumbnail (shaded + wireframe overlay, so topology
 reads at a glance), a description and search tags, and lives in its catalog so it
 shows up correctly in the Asset Browser's catalog tree.
 
-### Parametric primitives (Base catalog)
+### Parametric primitives
 
-All 7 Base shapes ship as plain **Object assets** — no Collection wrapper, no
+11 of the 14 shapes ship as plain **Object assets** — no Collection wrapper, no
 child Empties, nothing extra to bring along when you drag one into a scene. Each
 one is an empty-mesh object driving a Geometry Nodes modifier (built by a
 `build_<shape>_gn_group()` function in `scripts/build_library.py`) that exposes
 its dimensions as native viewport gizmos:
 
+**Base**
 - **Cube** — Size X/Y/Z (arrow gizmos), Division X/Y/Z (ring gizmos), Corner
   Ratio (a translate-only gizmo that moves the pivot anywhere from center to a
   corner), Smooth / Smooth Angle, Material
@@ -42,8 +43,28 @@ its dimensions as native viewport gizmos:
   no native Torus primitive node in Geometry Nodes)
 - **Plane** — Size X/Y, Division X/Y
 
-Every shape also has Smooth / Smooth Angle (via Blender's bundled *Smooth by
-Angle* node group) and a swappable Material input.
+**Hard Surface Kit**
+- **Rounded Cube** — Size X/Y/Z, Bevel Width, Bevel Segments (a `Mesh Cube` +
+  the `Mesh Bevel` node, replacing the old fixed Bevel modifier)
+- **Dome** — Radius, Segments, Rings (a UV Sphere cut flat by a Boolean
+  `DIFFERENCE` against a cutter cube — see note below)
+- **Wedge** — Width, Depth, Height, Bevel Width, Bevel Segments (swept from a
+  triangular profile curve along a straight path — no native wedge/ramp
+  primitive either)
+- **Hex Prism** — Radius, Depth, Vertices (defaults to 6 — set it to anything
+  to get any N-gon prism), Bevel Width, Bevel Segments
+
+Tube, Stairs and Pyramid are still fixed meshes (not converted in this pass).
+
+Every parametric shape also has Smooth / Smooth Angle (via Blender's bundled
+*Smooth by Angle* node group) and a swappable Material input.
+
+> **Boolean node gotcha:** this Blender build's `Mesh Boolean` node silently
+> returns its second input **unmodified** for `INTERSECT`/`UNION` — a solver
+> bug/limitation confirmed by testing plain cube-vs-cube — while `DIFFERENCE`
+> (Mesh 1 − Mesh 2) works correctly and cleanly caps the cut. The Dome uses
+> `DIFFERENCE` (sphere minus a cutter covering the unwanted lower half) instead
+> of the more obvious `INTERSECT`, precisely to route around this.
 
 The gizmos are plain node-group *data* (`GeometryNodeGizmoLinear` /
 `GeometryNodeGizmoDial` / `GeometryNodeGizmoTransform`, color-coded per axis), the
