@@ -448,8 +448,8 @@
   "files": [
     {
       "path": "primitives.blend",
-      "size_in_bytes": 896343,
-      "hash": "SHA256:b01f0af29008015a649fc75fb9b06ed7e29c408f123932dca029d16876f16207",
+      "size_in_bytes": 896292,
+      "hash": "SHA256:0fd83c58a5489a2d2be893f35ff638a8a123b5395603b0c97696f40ee9ae3784",
       "blender_version": "5.2.44"
     }
   ]

@@ -10,13 +10,13 @@ thumbnailed.
 
 ## What's inside
 
-One file, `assets/primitives.blend`, containing 18 assets in two catalogs, every
-single one parametric:
+One file, `assets/primitives.blend`, containing 18 assets, every single one
+parametric, organized under a **Primitives** catalog with two sub-catalogs:
 
-**Base** — the classic primitives, plus two more from the *Modern Primitives* set
+**Primitives / Base** — the classic primitives, plus two more from the *Modern Primitives* set
 - Cube, Sphere, Ico Sphere, Cylinder, Cone, Torus, Plane, Quad Sphere, Capsule
 
-**Hard Surface Kit** — kitbash-ready pieces, including two mechanical parts
+**Primitives / Hard Surface Kit** — kitbash-ready pieces, including two mechanical parts
 - Rounded Cube, Tube (hollow cylinder), Dome (half-sphere), Wedge, Stairs,
   Pyramid, Hex Prism, Gear, Spring
 
@@ -135,6 +135,16 @@ entry should appear, marked as a remote (globe icon) library.
 > not the repo root, and not the `github.com` page (which serves HTML, not raw
 > files — that's the mistake that produces a "file does not exist ... meta.json"
 > error).
+
+> **Stale cache after an update:** this repo's `.blend` gets rebuilt from
+> scratch fairly often, and Blender caches the downloaded listing + `.blend`
+> locally. If a newly-added or renamed asset gives an error like *"Asset could
+> not be found (relative identifier: 'primitives.blend/Object/...')"* even
+> though it's clearly in the index, the local cache is out of date — with the
+> *Primitives* library active in the Asset Browser, run
+> `bpy.ops.asset.library_reload_listing()` (there's also a refresh option in
+> the Asset Browser's header) to force Blender to re-fetch the listing and
+> `.blend` instead of trusting what it already downloaded.
 
 ### Option B — Local folder library (any Blender version with Asset Browser)
 

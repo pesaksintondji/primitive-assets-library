@@ -1912,8 +1912,8 @@ CATS_CONTENT = f"""# This is an Asset Catalog Definition file for Blender.
 
 VERSION 1
 
-{CATALOG_BASE}:Base:Base
-{CATALOG_KIT}:Hard Surface Kit:Hard-Surface-Kit
+{CATALOG_BASE}:Primitives/Base:Base
+{CATALOG_KIT}:Primitives/Hard Surface Kit:Hard-Surface-Kit
 """
 
 with open(CATS_PATH, "w") as f:

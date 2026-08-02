@@ -6,5 +6,5 @@
 
 VERSION 1
 
-6f46c395-e541-49e2-805e-6b76b228386c:Base:Base
-7bc7ab05-58e9-42ee-821b-feea30abdfb6:Hard Surface Kit:Hard-Surface-Kit
+6f46c395-e541-49e2-805e-6b76b228386c:Primitives/Base:Base
+7bc7ab05-58e9-42ee-821b-feea30abdfb6:Primitives/Hard Surface Kit:Hard-Surface-Kit
